@@ -1,5 +1,7 @@
 import Entities.User;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -9,47 +11,59 @@ import java.util.List;
 
 class MysqlCon {
 
-    public static User findOne(int id) {
+    public static <T> T findOne(int id, Class<T> clz) {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection con = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/orm", "root", "Sharoni123");
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(String.format("select * from user where id=%d", id));
-            User user = new User();
+            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE id=%d", clz.getSimpleName().toLowerCase(), id));
+
+            Constructor<T> constructor = clz.getConstructor(null);
+            T clzInstance = constructor.newInstance();
             if (rs.next()) {
-                user.setId(rs.getInt(1));
-                user.setName(rs.getString(2));
-                user.setAge(rs.getInt(3));
+
+                Field[] declaredFields = clz.getDeclaredFields();
+                for (Field field : declaredFields) {
+                    field.setAccessible(true);
+                    field.set(clzInstance, rs.getObject(field.getName()));
+                }
+
             } else {
 
             }
             con.close();
-            return user;
+
+            return clzInstance;
         } catch (Exception e) {
             System.out.println(e);
         }
         return null;
     }
 
-    public static List<User> executeQuery(String query) {
+    public static <T> List<T> findAll(Class<T> clz) {
 
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection con = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/orm", "root", "Sharoni123");
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(query);
-            List<User> users = new ArrayList<>();
+            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase()));
+            List<T> results = new ArrayList<>();
             while (rs.next()) {
-                User user = new User();
-                user.setId(rs.getInt(1));
-                user.setName(rs.getString(2));
-                user.setAge(rs.getInt(3));
-                users.add(user);
+                Constructor<T> constructor = clz.getConstructor(null);
+                T clzInstance = constructor.newInstance();
+
+                Field[] declaredFields = clz.getDeclaredFields();
+                for (Field field : declaredFields) {
+                    field.setAccessible(true);
+                    field.set(clzInstance, rs.getObject(field.getName()));
+                }
+                results.add(clzInstance);
             }
             con.close();
-            return users;
+
+            return results;
         } catch (Exception e) {
             System.out.println(e);
         }
