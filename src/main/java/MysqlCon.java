@@ -2,10 +2,8 @@ import Entities.User;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,13 +20,7 @@ class MysqlCon {
             Constructor<T> constructor = clz.getConstructor(null);
             T clzInstance = constructor.newInstance();
             if (rs.next()) {
-
-                Field[] declaredFields = clz.getDeclaredFields();
-                for (Field field : declaredFields) {
-                    field.setAccessible(true);
-                    field.set(clzInstance, rs.getObject(field.getName()));
-                }
-
+                fieldsAssignment(clz, clzInstance, rs);
             } else {
 
             }
@@ -51,15 +43,7 @@ class MysqlCon {
             ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase()));
             List<T> results = new ArrayList<>();
             while (rs.next()) {
-                Constructor<T> constructor = clz.getConstructor(null);
-                T clzInstance = constructor.newInstance();
-
-                Field[] declaredFields = clz.getDeclaredFields();
-                for (Field field : declaredFields) {
-                    field.setAccessible(true);
-                    field.set(clzInstance, rs.getObject(field.getName()));
-                }
-                results.add(clzInstance);
+                results.add(makeSingleInstance(clz,rs));
             }
             con.close();
 
@@ -68,5 +52,22 @@ class MysqlCon {
             System.out.println(e);
         }
         return null;
+    }
+
+
+    public static <T> T makeSingleInstance(Class<T> clz, ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
+        Constructor<T> constructor = clz.getConstructor(null);
+        T clzInstance = constructor.newInstance();
+        fieldsAssignment(clz, clzInstance, rs);
+
+        return clzInstance;
+    }
+
+    public static <T> void fieldsAssignment(Class<T> clz, T clzInstance, ResultSet rs) throws SQLException, IllegalAccessException {
+        Field[] declaredFields = clz.getDeclaredFields();
+        for (Field field : declaredFields) {
+            field.setAccessible(true);
+            field.set(clzInstance, rs.getObject(field.getName()));
+        }
     }
 }  
