@@ -60,10 +60,12 @@ class MysqlCon<T> {
     }
 
     public T findOne(int id) {
+        String query = QueryFactory.createFindOneQuery(clz, id);
         try {
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE id=%d", clz.getSimpleName().toLowerCase(), id));
+            ResultSet rs = stmt.executeQuery(query);
 
+            //TODO: ResultSet reader class
             Constructor<T> constructor = clz.getConstructor(null);
             T clzInstance = constructor.newInstance();
             if (rs.next()) {
@@ -80,10 +82,12 @@ class MysqlCon<T> {
     }
 
     public List<T> findAll() {
-
+        String query = QueryFactory.createFindAllQuery(clz);
         try {
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase()));
+            ResultSet rs = stmt.executeQuery(query);
+
+
             List<T> results = new ArrayList<>();
             while (rs.next()) {
                 results.add(createSingleInstance(rs));
@@ -95,7 +99,6 @@ class MysqlCon<T> {
         }
         return null;
     }
-
 
     public <T> void insertOne(T instance) {
 
@@ -110,7 +113,6 @@ class MysqlCon<T> {
         System.out.println("Rows affected:" + rowsAffected);
     }
 
-
     public <T> void insertMultiple(List<T> itemList) {
 
         String query = QueryFactory.createInsertMultipleQuery(itemList, clz);
@@ -124,7 +126,6 @@ class MysqlCon<T> {
         System.out.println("Rows affected:" + rowsAffected);
 
     }
-
 
     public T createSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
         Constructor<T> constructor = clz.getConstructor(null);

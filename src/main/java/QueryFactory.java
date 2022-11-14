@@ -94,6 +94,14 @@ public class QueryFactory {
         }
     }
 
+    public static <T> String createFindOneQuery(Class<?> clz, int id) {
+        return String.format("SELECT * FROM %s WHERE id=%d", clz.getSimpleName().toLowerCase(), id);
+    }
+
+    public static <T> String createFindAllQuery(Class<T> clz) {
+        return String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase());
+    }
+
     public static <T> String createInsertOneQuery(T instance) {
 
         Class<?> clz = instance.getClass();
@@ -122,6 +130,8 @@ public class QueryFactory {
         return queryString.append(columnsString).append(listValuesString).toString();
     }
 
+
+    // -----------------------HELPERS-----------------------//
     private static String handleValue(Object val) {
         if (ClassUtils.isPrimitiveOrWrapper(val.getClass())) {
             return val.toString();
