@@ -16,18 +16,11 @@ public class Client {
         User user = repo.findOne(2);
         System.out.println(user);
 
-        System.out.println("--------------------------");
+        repo.updateSingleProperty(1,"age","21");
+        System.out.println(repo.findOne(1));
 
-        //getByProperty
-        List<User> allMoshes = repo.getByProperty("name", "moshe");
-        System.out.println(allMoshes);
-
-        System.out.println("--------------------------");
-
-        //insetOne
-        User user1 = new User(105,"TestUser",35);
-        repo.insertOne(user1);
-
+        //repo.insertOne(new User(2,"safaa",20));
+        repo.updateRow(2,new User(2,"saf",33));
         repo.close();
     }
 }
