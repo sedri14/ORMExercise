@@ -110,12 +110,7 @@ class MysqlCon<T> {
         System.out.println("Rows affected:" + rowsAffected);
     }
 
-    //Add multiple rows:
-//    INSERT INTO table_name (column1, column2, column3,etc)
-//    VALUES
-//            (value1, value2, value3, etc),
-//            (value1, value2, value3, etc),
-//            (value1, value2, value3, etc);
+
     public <T> void insertMultiple(List<T> itemList) {
 
         String query = QueryFactory.createInsertMultipleQuery(itemList, clz);

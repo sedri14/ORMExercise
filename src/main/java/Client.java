@@ -23,21 +23,21 @@ public class Client {
 //        List<User> allMoshes = repo.getByProperty("name", "moshe");
 //        System.out.println(allMoshes);
 
-        System.out.println("--------------------------");
-
-        //insetOne
-        User user1 = new User(8989,"TestUser",35);
-        repo.insertOne(user1);
-
-        System.out.println("--------------------------");
-
-//        //insertMultiple
-//        List<User> usersToInsert = new ArrayList<>();
-//        usersToInsert.add(new User(4841, "Gogo", 28));
-//        usersToInsert.add(new User(4842, "Yoyo", 35));
-//        usersToInsert.add(new User(4843, "Dodo", 15));
+//        System.out.println("--------------------------");
 //
-//        repo.insertMultiple(usersToInsert);
+//        //insetOne
+//        User user1 = new User(8989,"TestUser",35);
+//        repo.insertOne(user1);
+
+        System.out.println("--------------------------");
+
+        //insertMultiple
+        List<User> usersToInsert = new ArrayList<>();
+        usersToInsert.add(new User(4841, "Gogo", 28));
+        usersToInsert.add(new User(4842, "Yoyo", 35));
+        usersToInsert.add(new User(4843, "Dodo", 15));
+
+        repo.insertMultiple(usersToInsert);
 
 
         repo.close();

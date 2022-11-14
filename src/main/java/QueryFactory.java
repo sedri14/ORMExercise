@@ -17,7 +17,7 @@ public class QueryFactory {
             queryString.append(createColumnMySqlDeclaration(field)).append(", ");
         }
 
-        queryString.delete(queryString.length()-2, queryString.length());
+        queryString.delete(queryString.length() - 2, queryString.length());
         queryString.append(primaryKeyString(declaredFields));
         queryString.append(");");
         return queryString.toString();
@@ -76,7 +76,7 @@ public class QueryFactory {
             }
             primaryKeyConstraint.append(", ");
         }
-        primaryKeyConstraint.delete(primaryKeyConstraint.length()-2, primaryKeyConstraint.length());
+        primaryKeyConstraint.delete(primaryKeyConstraint.length() - 2, primaryKeyConstraint.length());
         primaryKeyConstraint.append(")");
         return primaryKeyConstraint.toString();
     }
@@ -94,66 +94,34 @@ public class QueryFactory {
         }
     }
 
-    //Add a single row:
-    //INSERT INTO table_name (column1, column2, column3,etc)
-    //VALUES (value1, value2, value3, etc);
     public static <T> String createInsertOneQuery(T instance) {
 
         Class<?> clz = instance.getClass();
         String tableName = clz.getSimpleName().toLowerCase();
 
         StringBuilder queryString = new StringBuilder(String.format("INSERT INTO %s ", tableName));
-        String columnsString = columnsFormattedString(instance);
+        String columnsString = columnsFormattedString(instance.getClass());
         StringBuilder valuesString = new StringBuilder("VALUES ").append(valuesFormattedString(instance));
 
         return queryString.append(columnsString).append(valuesString).toString();
     }
+
     public static <T> String createInsertMultipleQuery(List<T> itemList, Class<?> clz) {
 
-        StringBuilder queryString = new StringBuilder("INSERT INTO " + clz.getSimpleName().toLowerCase() + "(");
-        Field[] declaredFields = clz.getDeclaredFields();
+        String tableName = clz.getSimpleName().toLowerCase();
+        StringBuilder queryString = new StringBuilder(String.format("INSERT INTO %s ", tableName));
+        String columnsString = columnsFormattedString(clz);
+        StringBuilder listValuesString = new StringBuilder("VALUES ");
 
-        //string list of columns (column1, column2, column3,etc)
-        StringBuilder columnsString = new StringBuilder();
-
-        for (Field field : declaredFields) {
-            field.setAccessible(true);
-            String fieldName = field.getName();
-            columnsString.append(fieldName);
-            columnsString.append(", ");
-        }
-
-        columnsString.delete(columnsString.length() - 1, columnsString.length());
-        columnsString.append(")");
-
-        //string lists of values (value1, value2, value3, etc),(value1, value2, value3, etc),(value1, value2, value3, etc)
-        StringBuilder valuesString = new StringBuilder("VALUES ");
         for (T item : itemList) {
-            valuesString.append("(");
-            //make a new iterator for each iteration???
-            for (Field field : declaredFields) {
-                //Field field = iterator.next();
-                field.setAccessible(true);
-                //String fieldName = field.getName();
-                Object val = null;
-                try {
-                    val = field.get(item);
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-                Object valToInsert = handleValue(val);
-                valuesString.append(valToInsert);
-                valuesString.append(", ");
-            }
-            valuesString.delete(valuesString.length() - 1, valuesString.length());
-            valuesString.append(")");
-            valuesString.append(",");
+            listValuesString.append(valuesFormattedString(item));
+            listValuesString.append(",");
         }
-        valuesString.delete(valuesString.length() - 1, valuesString.length());
+        listValuesString.delete(listValuesString.length() - 1, listValuesString.length());
 
-        String res = queryString.append(columnsString).append(valuesString).toString();
-        return res;
+        return queryString.append(columnsString).append(listValuesString).toString();
     }
+
     private static String handleValue(Object val) {
         if (ClassUtils.isPrimitiveOrWrapper(val.getClass())) {
             return val.toString();
@@ -164,12 +132,11 @@ public class QueryFactory {
         }
     }
 
-    //TODO: change parameter to Class<?> clz, we don't actually need an instance here.
-    private static <T> String columnsFormattedString(T instance) {
+    private static <T> String columnsFormattedString(Class<?> clz) {
 
         StringBuilder columnsString = new StringBuilder("(");
 
-        Field[] declaredFields = instance.getClass().getDeclaredFields();
+        Field[] declaredFields = clz.getDeclaredFields();
         for (Field field : declaredFields) {
             field.setAccessible(true);
             String fieldName = field.getName();
