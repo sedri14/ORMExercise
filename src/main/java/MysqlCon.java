@@ -7,34 +7,27 @@ import java.util.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
-import Annotations.mySqlColumn;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.ClassUtils;
 
 class MysqlCon<T> {
 
-    Connection con;
-
     private final Class<T> clz;
 
     public MysqlCon(Class<T> clz) {
-        this.clz = clz;
         try {
-            ConfigManager configs = new ConfigManager();
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/" + configs.schemaName,
-                    configs.username, configs.password);
-
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        this.clz = clz;
+        try (Connection con = ConnectionPool.getConnection()) {
             DatabaseMetaData meta = con.getMetaData();
             if (!meta.getTables(null, null, clz.getSimpleName().toLowerCase(), new String[]{"TABLE"}).next()) {
                 initTable();
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
@@ -42,7 +35,7 @@ class MysqlCon<T> {
 
     public List<T> getByProperty(String propName, String propVal) {
 
-        try {
+        try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(),propName.toLowerCase(),propVal.toLowerCase()));
             List<T> results = new ArrayList<>();
@@ -61,7 +54,7 @@ class MysqlCon<T> {
     }
 
     public T findOne(int id) {
-        try {
+        try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE id=%d", clz.getSimpleName().toLowerCase(), id));
 
@@ -82,7 +75,7 @@ class MysqlCon<T> {
 
     public List<T> findAll() {
 
-        try {
+        try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase()));
             List<T> results = new ArrayList<>();
@@ -104,6 +97,7 @@ class MysqlCon<T> {
 
         int rowsAffected = 0;
         try {
+            Connection con = ConnectionPool.getConnection();
             Statement stmt = con.createStatement();
             rowsAffected = stmt.executeUpdate(buildInsertQueryString(instance));
         } catch (Exception e) {
@@ -179,7 +173,7 @@ class MysqlCon<T> {
     }
 
     public boolean initTable() {
-        try (Statement statement = con.createStatement()) {
+        try (Connection con = ConnectionPool.getConnection(); Statement statement = con.createStatement()) {
             return statement.execute(QueryFactory.createTableMySQLStatement(clz));
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -188,23 +182,16 @@ class MysqlCon<T> {
 
     public boolean truncateTable() {
         String queryString = "TRUNCATE TABLE " + clz.getSimpleName().toLowerCase() + ";";
-        try (Statement statement = con.createStatement()){
+        try (Connection con = ConnectionPool.getConnection();
+             Statement statement = con.createStatement()){
             return statement.execute(queryString);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void close() {
-        try {
-            con.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public void updateSingleProperty(int id,String item,String newValue) {
-        try {
+        try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             stmt.executeUpdate(String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id));
         } catch (Exception e) {
@@ -212,7 +199,7 @@ class MysqlCon<T> {
         }
     }
     public void updateRow(int id,T object) {
-        try {
+        try (Connection con = ConnectionPool.getConnection()){
             Statement stmt = con.createStatement();
             StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
             Field[] fields = clz.getDeclaredFields();
@@ -233,7 +220,7 @@ class MysqlCon<T> {
         }
     }
     public void singleItemDeletionByProperty(String property,String value) {
-        try {
+        try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             stmt.executeUpdate(String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value));
         } catch (Exception e) {

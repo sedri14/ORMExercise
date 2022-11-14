@@ -21,6 +21,5 @@ public class Client {
 
         //repo.insertOne(new User(2,"safaa",20));
         repo.updateRow(2,new User(2,"saf",33));
-        repo.close();
     }
 }
