@@ -16,6 +16,12 @@ public class Client {
         User user = repo.findOne(2);
         System.out.println(user);
 
+        System.out.println("--------------------------");
+
+        //getByProperty
+        List<User> allMoshes = repo.getByProperty("name", "moshe");
+        System.out.println(allMoshes);
+
         repo.close();
     }
 }
