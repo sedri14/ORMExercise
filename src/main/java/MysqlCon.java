@@ -35,6 +35,27 @@ class MysqlCon<T> {
         }
     }
 
+
+    public List<T> getByProperty(String propName, String propVal) {
+
+        try {
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(),propName.toLowerCase(),propVal.toLowerCase()));
+            List<T> results = new ArrayList<>();
+            while (rs.next()) {
+                results.add(createSingleInstance(rs));
+            }
+
+            return results;
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+
     public T findOne(int id) {
         try {
             Statement stmt = con.createStatement();
@@ -62,7 +83,7 @@ class MysqlCon<T> {
             ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase()));
             List<T> results = new ArrayList<>();
             while (rs.next()) {
-                results.add(makeSingleInstance(rs));
+                results.add(createSingleInstance(rs));
             }
 
             return results;
@@ -137,7 +158,7 @@ class MysqlCon<T> {
 //            (value1, value2, value3, etc);
 
 
-    public T makeSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
+    public T createSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
         Constructor<T> constructor = clz.getConstructor(null);
         T clzInstance = constructor.newInstance();
         fieldsAssignment(clzInstance, rs);
@@ -184,6 +205,15 @@ class MysqlCon<T> {
             name = field.getName();
         }
         return name + " " + type;
+    }
+
+    public boolean deleteTable() {
+        String queryString = "DROP TABLE " + clz.getSimpleName().toLowerCase() + ";";
+        try (Statement statement = con.createStatement()){
+            return statement.execute(queryString);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void close() {
