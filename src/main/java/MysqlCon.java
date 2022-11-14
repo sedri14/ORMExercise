@@ -35,6 +35,27 @@ class MysqlCon<T> {
         }
     }
 
+
+    public List<T> getByProperty(String propName, String propVal) {
+
+        try {
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(),propName.toLowerCase(),propVal.toLowerCase()));
+            List<T> results = new ArrayList<>();
+            while (rs.next()) {
+                results.add(createSingleInstance(rs));
+            }
+
+            return results;
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+
     public T findOne(int id) {
         try {
             Statement stmt = con.createStatement();
@@ -62,7 +83,7 @@ class MysqlCon<T> {
             ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase()));
             List<T> results = new ArrayList<>();
             while (rs.next()) {
-                results.add(makeSingleInstance(rs));
+                results.add(createSingleInstance(rs));
             }
 
             return results;
@@ -73,7 +94,7 @@ class MysqlCon<T> {
     }
 
 
-    public T makeSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
+    public T createSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
         Constructor<T> constructor = clz.getConstructor(null);
         T clzInstance = constructor.newInstance();
         fieldsAssignment(clzInstance, rs);
