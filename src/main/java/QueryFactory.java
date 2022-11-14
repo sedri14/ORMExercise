@@ -102,33 +102,9 @@ public class QueryFactory {
         Class<?> clz = instance.getClass();
         String tableName = clz.getSimpleName().toLowerCase();
 
-        StringBuilder queryString = new StringBuilder(String.format("INSERT INTO %s (", tableName));
-        StringBuilder columnsString = new StringBuilder();
-        StringBuilder valuesString = new StringBuilder("VALUES (");
-
-        Field[] declaredFields = clz.getDeclaredFields();
-        Iterator<Field> iterator = Arrays.stream(declaredFields).iterator();
-        while (iterator.hasNext()) {
-            Field field = iterator.next();
-            field.setAccessible(true);
-            String fieldName = field.getName();
-            Object val = null;
-            try {
-                val = field.get(instance);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-            columnsString.append(fieldName);
-            Object valToInsert = handleValue(val);
-            valuesString.append(valToInsert);
-
-            if (iterator.hasNext()) {
-                columnsString.append(", ");
-                valuesString.append(", ");
-            }
-        }
-        columnsString.append(")");
-        valuesString.append(")");
+        StringBuilder queryString = new StringBuilder(String.format("INSERT INTO %s ", tableName));
+        String columnsString = columnsFormattedString(instance);
+        StringBuilder valuesString = new StringBuilder("VALUES ").append(valuesFormattedString(instance));
 
         return queryString.append(columnsString).append(valuesString).toString();
     }
@@ -188,4 +164,44 @@ public class QueryFactory {
         }
     }
 
+    //TODO: change parameter to Class<?> clz, we don't actually need an instance here.
+    private static <T> String columnsFormattedString(T instance) {
+
+        StringBuilder columnsString = new StringBuilder("(");
+
+        Field[] declaredFields = instance.getClass().getDeclaredFields();
+        for (Field field : declaredFields) {
+            field.setAccessible(true);
+            String fieldName = field.getName();
+            columnsString.append(fieldName);
+            columnsString.append(",");
+        }
+        columnsString.delete(columnsString.length() - 1, columnsString.length());
+        columnsString.append(")");
+
+        return columnsString.toString();
+    }
+
+    private static <T> String valuesFormattedString(T instance) {
+
+        StringBuilder valuesString = new StringBuilder("(");
+
+        Field[] declaredFields = instance.getClass().getDeclaredFields();
+        for (Field field : declaredFields) {
+            field.setAccessible(true);
+            Object val = null;
+            try {
+                val = field.get(instance);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+            Object valToInsert = handleValue(val);
+            valuesString.append(valToInsert);
+            valuesString.append(",");
+        }
+        valuesString.delete(valuesString.length() - 1, valuesString.length());
+        valuesString.append(")");
+
+        return valuesString.toString();
+    }
 }
