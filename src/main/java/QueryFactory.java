@@ -149,8 +149,8 @@ public class QueryFactory {
         Field[] declaredFields = clz.getDeclaredFields();
         for (Field field : declaredFields) {
             field.setAccessible(true);
-            String fieldName = field.getName();
-            columnsString.append(fieldName);
+            String colName = (field.isAnnotationPresent(mySqlColumn.class) ? field.getAnnotation(mySqlColumn.class).columnName() : field.getName());
+            columnsString.append(colName);
             columnsString.append(",");
         }
         columnsString.delete(columnsString.length() - 1, columnsString.length());
