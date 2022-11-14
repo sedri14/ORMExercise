@@ -1,6 +1,9 @@
 package Entities;
 
+import Annotations.mySqlColumn;
+
 public class User {
+    @mySqlColumn(autoIncrement = true, primaryKey = true)
     private int id;
     private String name;
     private int age;
