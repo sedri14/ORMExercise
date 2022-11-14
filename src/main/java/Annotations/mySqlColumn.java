@@ -9,10 +9,17 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface mySqlColumn {
 
-    MySqlType type();
-    String columnName();
+    MySqlType type() default MySqlType.DEFAULT;
+
+    int length() default 0;
+    String columnName() default "";
+
+    boolean notNull() default false;
+    boolean unique() default false;
+    boolean primaryKey() default false;
+    boolean autoIncrement() default false;
 
     enum MySqlType {
-        INTEGER, VARCHAR, BOOLEAN
+        DEFAULT, INTEGER, VARCHAR, BOOLEAN, OBJECT
     }
 }

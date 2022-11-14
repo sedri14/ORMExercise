@@ -1,12 +1,21 @@
 package Entities;
 
+import Annotations.mySqlColumn;
+
 public class User {
-    public int id;
-    public String name;
-    public int age;
+    @mySqlColumn(autoIncrement = true, primaryKey = true)
+    private int id;
+    private String name;
+    private int age;
 
     public User(){
 
+    }
+
+    public User(int id, String name, int age) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
     }
 
     public int getId() {
