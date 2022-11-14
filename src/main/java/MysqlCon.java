@@ -201,4 +201,12 @@ class MysqlCon<T> {
             System.out.println(e);
         }
     }
+    public void singleItemDeletionByProperty(String property,String value) {
+        try {
+            Statement stmt = con.createStatement();
+            stmt.executeUpdate(String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
 }  

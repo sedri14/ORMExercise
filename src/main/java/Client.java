@@ -19,7 +19,7 @@ public class Client {
         repo.updateSingleProperty(1,"age","21");
         System.out.println(repo.findOne(1));
 
-        repo.updateRow(1,user);
+        repo.singleItemDeletionByProperty("id","1");
         repo.close();
     }
 }
