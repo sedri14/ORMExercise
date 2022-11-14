@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -170,6 +171,34 @@ class MysqlCon<T> {
                 return "BOOLEAN";
             default:
                 return "VARCHAR(255)";
+        }
+    }
+    public void updateSingleProperty(int id,String item,String newValue) {
+        try {
+            Statement stmt = con.createStatement();
+            stmt.executeUpdate(String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+    public void updateRow(int id,T object) {
+        try {
+            Statement stmt = con.createStatement();
+            String query= String.format("UPDATE %s SET ",clz.getSimpleName().toLowerCase());
+            Field[] fields = clz.getDeclaredFields();
+            for (Field field:
+                 fields) {
+                query+=field.getName();
+                query+=" = ";
+                query+=field.get(object);
+                query+= " , ";
+            }
+            query+=String.format("WHERE id = %d;",id);
+            System.out.println(query);
+            //stmt.executeUpdate(String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id));
+
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 }  

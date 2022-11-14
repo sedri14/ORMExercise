@@ -1,9 +1,9 @@
 package Entities;
 
 public class User {
-    private int id;
-    private String name;
-    private int age;
+    public int id;
+    public String name;
+    public int age;
 
     public User(){
 

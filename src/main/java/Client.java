@@ -13,9 +13,13 @@ public class Client {
         System.out.println("--------------------------");
 
         //findOne
-        User user = repo.findOne(2);
+        User user = repo.findOne(1);
         System.out.println(user);
 
+        repo.updateSingleProperty(1,"age","21");
+        System.out.println(repo.findOne(1));
+
+        repo.updateRow(1,user);
         repo.close();
     }
 }
