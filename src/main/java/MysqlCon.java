@@ -22,7 +22,7 @@ class MysqlCon<T> {
     public MysqlCon(Class<T> clz) {
         this.clz = clz;
         try {
-            SQLProps configs = getConfigs();
+            ConfigManager configs = new ConfigManager();
             Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/" + configs.schemaName,
@@ -203,34 +203,6 @@ class MysqlCon<T> {
         }
     }
 
-    private SQLProps getConfigs() {
-        InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("MySql.config");
-        if (resourceAsStream == null) {
-            throw new IllegalArgumentException("config file not found!");
-        }
-
-        Properties props = new Properties();
-
-        try {
-            props.load(resourceAsStream);
-            return new SQLProps(props.getProperty("SCHEMA_NAME"), props.getProperty("DB_USER"), props.getProperty("DB_PASSWORD"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private class SQLProps {
-        String schemaName;
-        String username;
-        String password;
-
-        public SQLProps(String schemaName, String username, String password) {
-            this.schemaName = schemaName;
-            this.username = username;
-            this.password = password;
-        }
-    }
-
     public void updateSingleProperty(int id,String item,String newValue) {
         try {
             Statement stmt = con.createStatement();
@@ -245,7 +217,7 @@ class MysqlCon<T> {
             StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
             Field[] fields = clz.getDeclaredFields();
             for (Field field:
-                 fields) {
+                    fields) {
                 query.append(field.getName());
                 query.append(" = ");
                 query.append(handleValue(field.get(object)));
