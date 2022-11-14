@@ -4,7 +4,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 
 import Annotations.mySqlColumn;
 import com.google.gson.Gson;
@@ -227,4 +230,42 @@ class MysqlCon<T> {
             this.password = password;
         }
     }
-}  
+
+    public void updateSingleProperty(int id,String item,String newValue) {
+        try {
+            Statement stmt = con.createStatement();
+            stmt.executeUpdate(String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+    public void updateRow(int id,T object) {
+        try {
+            Statement stmt = con.createStatement();
+            StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
+            Field[] fields = clz.getDeclaredFields();
+            for (Field field:
+                 fields) {
+                query.append(field.getName());
+                query.append(" = ");
+                query.append(handleValue(field.get(object)));
+                query.append(" , ");
+            }
+            query.delete(query.length()-3, query.length()-1);
+            query.append(String.format("WHERE id = %d;",id));
+            System.out.println(query);
+            stmt.executeUpdate(String.valueOf(query));
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+    public void singleItemDeletionByProperty(String property,String value) {
+        try {
+            Statement stmt = con.createStatement();
+            stmt.executeUpdate(String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}
