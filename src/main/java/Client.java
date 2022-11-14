@@ -16,6 +16,12 @@ public class Client {
         User user = repo.findOne(2);
         System.out.println(user);
 
+        System.out.println("--------------------------");
+
+        //insetOne
+        User user1 = new User(105,"TestUser",35);
+        repo.insertOne(user1);
+
         repo.close();
     }
 }
