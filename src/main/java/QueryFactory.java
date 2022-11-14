@@ -149,7 +149,7 @@ public class QueryFactory {
         Field[] declaredFields = clz.getDeclaredFields();
         for (Field field : declaredFields) {
             field.setAccessible(true);
-            String colName = (field.isAnnotationPresent(mySqlColumn.class) ? field.getAnnotation(mySqlColumn.class).columnName() : field.getName());
+            String colName = assignColName(field);
             columnsString.append(colName);
             columnsString.append(",");
         }
@@ -157,6 +157,16 @@ public class QueryFactory {
         columnsString.append(")");
 
         return columnsString.toString();
+    }
+
+    private static String assignColName(Field field) {
+
+        if (field.isAnnotationPresent(mySqlColumn.class)) {
+            if (!field.getAnnotation(mySqlColumn.class).columnName().isEmpty()) {
+                return field.getAnnotation(mySqlColumn.class).columnName();
+            }
+        }
+        return field.getName();
     }
 
     private static <T> String valuesFormattedString(T instance) {

@@ -33,9 +33,9 @@ public class Client {
 
         //insertMultiple
         List<User> usersToInsert = new ArrayList<>();
-        usersToInsert.add(new User(4841, "Gogo", 28));
-        usersToInsert.add(new User(4842, "Yoyo", 35));
-        usersToInsert.add(new User(4843, "Dodo", 15));
+        usersToInsert.add(new User(888, "Gogo", 28));
+        usersToInsert.add(new User(999, "Yoyo", 35));
+        usersToInsert.add(new User(555, "Dodo", 15));
 
         repo.insertMultiple(usersToInsert);
 
