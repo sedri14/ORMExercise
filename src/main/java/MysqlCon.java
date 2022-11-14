@@ -41,7 +41,7 @@ class MysqlCon<T> {
 
         try {
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(),propName.toLowerCase(),propVal.toLowerCase()));
+            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(), propName.toLowerCase(), propVal.toLowerCase()));
             List<T> results = new ArrayList<>();
             while (rs.next()) {
                 results.add(createSingleInstance(rs));
@@ -50,8 +50,7 @@ class MysqlCon<T> {
             return results;
         } catch (SQLException e) {
             System.out.println(e.getMessage());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println(e);
         }
         return null;
@@ -102,14 +101,78 @@ class MysqlCon<T> {
         int rowsAffected = 0;
         try {
             Statement stmt = con.createStatement();
-            rowsAffected = stmt.executeUpdate(buildInsertQueryString(instance));
+            rowsAffected = stmt.executeUpdate(buildInsertOneQueryString(instance));
         } catch (Exception e) {
             System.out.println(e);
         }
         System.out.println("Rows affected:" + rowsAffected);
     }
 
-    public <T> String buildInsertQueryString(T instance){
+    //Add multiple rows:
+//    INSERT INTO table_name (column1, column2, column3,etc)
+//    VALUES
+//            (value1, value2, value3, etc),
+//            (value1, value2, value3, etc),
+//            (value1, value2, value3, etc);
+    public <T> void insertMultiple(List<T> itemList) {
+        int rowsAffected = 0;
+        try {
+            Statement stmt = con.createStatement();
+            rowsAffected = stmt.executeUpdate(buildInsertMultipleQueryString(itemList));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        System.out.println("Rows affected:" + rowsAffected);
+
+    }
+
+    private <T> String buildInsertMultipleQueryString(List<T> itemList) {
+        StringBuilder queryString = new StringBuilder("INSERT INTO " + clz.getSimpleName().toLowerCase() + "(");
+        Field[] declaredFields = clz.getDeclaredFields();
+
+        //string list of columns (column1, column2, column3,etc)
+        StringBuilder columnsString = new StringBuilder();
+
+        for (Field field : declaredFields) {
+            field.setAccessible(true);
+            String fieldName = field.getName();
+            columnsString.append(fieldName);
+            columnsString.append(", ");
+        }
+
+        columnsString.delete(columnsString.length() - 1, columnsString.length());
+        columnsString.append(")");
+
+        //string lists of values (value1, value2, value3, etc),(value1, value2, value3, etc),(value1, value2, value3, etc)
+        StringBuilder valuesString = new StringBuilder("VALUES ");
+        for (T item : itemList) {
+            valuesString.append("(");
+            //make a new iterator for each iteration???
+            for (Field field : declaredFields) {
+                //Field field = iterator.next();
+                field.setAccessible(true);
+                //String fieldName = field.getName();
+                Object val = null;
+                try {
+                    val = field.get(item);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+                Object valToInsert = handleValue(val);
+                valuesString.append(valToInsert);
+                valuesString.append(", ");
+            }
+                valuesString.delete(valuesString.length() - 1, valuesString.length());
+                valuesString.append(")");
+                valuesString.append(",");
+        }
+        valuesString.delete(valuesString.length() - 1, valuesString.length());
+
+        String res = queryString.append(columnsString).append(valuesString).toString();
+        return res;
+    }
+
+    private  <T> String buildInsertOneQueryString(T instance) {
         StringBuilder queryString = new StringBuilder("INSERT INTO " + clz.getSimpleName().toLowerCase() + "(");
         StringBuilder columnsString = new StringBuilder();
         StringBuilder valuesString = new StringBuilder("VALUES (");
@@ -151,13 +214,6 @@ class MysqlCon<T> {
         }
     }
 
-    //Add multiple rows:
-//    INSERT INTO table_name (column1, column2, column3,etc)
-//    VALUES
-//            (value1, value2, value3, etc),
-//    (value1, value2, value3, etc),
-//            (value1, value2, value3, etc);
-
 
     public T createSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
         Constructor<T> constructor = clz.getConstructor(null);
@@ -190,7 +246,7 @@ class MysqlCon<T> {
             queryString.append(createColumnMySqlDeclaration(field)).append(", ");
         }
 
-        queryString.delete(queryString.length()-2, queryString.length());
+        queryString.delete(queryString.length() - 2, queryString.length());
         queryString.append(primaryKeyString(declaredFields));
         queryString.append(");");
         return queryString.toString();
@@ -249,14 +305,14 @@ class MysqlCon<T> {
             }
             primaryKeyConstraint.append(", ");
         }
-        primaryKeyConstraint.delete(primaryKeyConstraint.length()-2, primaryKeyConstraint.length());
+        primaryKeyConstraint.delete(primaryKeyConstraint.length() - 2, primaryKeyConstraint.length());
         primaryKeyConstraint.append(")");
         return primaryKeyConstraint.toString();
     }
 
     public boolean truncateTable() {
         String queryString = "TRUNCATE TABLE " + clz.getSimpleName().toLowerCase() + ";";
-        try (Statement statement = con.createStatement()){
+        try (Statement statement = con.createStatement()) {
             return statement.execute(queryString);
         } catch (SQLException e) {
             throw new RuntimeException(e);

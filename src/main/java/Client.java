@@ -1,5 +1,6 @@
 import Entities.User;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Client {
@@ -27,6 +28,17 @@ public class Client {
         //insetOne
         User user1 = new User(105,"TestUser",35);
         repo.insertOne(user1);
+
+        System.out.println("--------------------------");
+
+        //insertMultiple
+        List<User> usersToInsert = new ArrayList<>();
+        usersToInsert.add(new User(4841, "Gogo", 28));
+        usersToInsert.add(new User(4842, "Yoyo", 35));
+        usersToInsert.add(new User(4843, "Dodo", 15));
+
+        repo.insertMultiple(usersToInsert);
+
 
         repo.close();
     }
