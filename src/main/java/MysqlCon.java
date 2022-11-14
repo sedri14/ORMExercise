@@ -109,7 +109,7 @@ class MysqlCon<T> {
 
         String query = QueryFactory.createInsertMultipleQuery(itemList, clz);
         int rowsAffected = 0;
-        try {
+        try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             rowsAffected = stmt.executeUpdate(query);
         } catch (Exception e) {
@@ -170,7 +170,7 @@ class MysqlCon<T> {
                     fields) {
                 query.append(field.getName());
                 query.append(" = ");
-                query.append(handleValue(field.get(object)));
+                query.append(QueryFactory.handleValue(field.get(object)));
                 query.append(" , ");
             }
             query.delete(query.length()-3, query.length()-1);

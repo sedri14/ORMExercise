@@ -132,7 +132,7 @@ public class QueryFactory {
 
 
     // -----------------------HELPERS-----------------------//
-    private static String handleValue(Object val) {
+    public static String handleValue(Object val) {
         if (ClassUtils.isPrimitiveOrWrapper(val.getClass())) {
             return val.toString();
         } else if (val instanceof String) {
