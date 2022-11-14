@@ -39,7 +39,7 @@ public class Client {
 
         repo.insertMultiple(usersToInsert);
 
-
-        repo.close();
+        //repo.insertOne(new User(2,"safaa",20));
+        repo.updateRow(2,new User(2,"saf",33));
     }
 }

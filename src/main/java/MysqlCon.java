@@ -7,34 +7,27 @@ import java.util.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
-import Annotations.mySqlColumn;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.ClassUtils;
 
 class MysqlCon<T> {
 
-    Connection con;
-
     private final Class<T> clz;
 
     public MysqlCon(Class<T> clz) {
-        this.clz = clz;
         try {
-            ConfigManager configs = new ConfigManager();
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/" + configs.schemaName,
-                    configs.username, configs.password);
-
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        this.clz = clz;
+        try (Connection con = ConnectionPool.getConnection()) {
             DatabaseMetaData meta = con.getMetaData();
             if (!meta.getTables(null, null, clz.getSimpleName().toLowerCase(), new String[]{"TABLE"}).next()) {
                 initTable();
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
@@ -42,7 +35,7 @@ class MysqlCon<T> {
 
     public List<T> getByProperty(String propName, String propVal) {
 
-        try {
+        try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(), propName.toLowerCase(), propVal.toLowerCase()));
             List<T> results = new ArrayList<>();
@@ -61,7 +54,7 @@ class MysqlCon<T> {
 
     public T findOne(int id) {
         String query = QueryFactory.createFindOneQuery(clz, id);
-        try {
+        try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(query);
 
@@ -83,10 +76,9 @@ class MysqlCon<T> {
 
     public List<T> findAll() {
         String query = QueryFactory.createFindAllQuery(clz);
-        try {
+        try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(query);
-
 
             List<T> results = new ArrayList<>();
             while (rs.next()) {
@@ -101,10 +93,10 @@ class MysqlCon<T> {
     }
 
     public <T> void insertOne(T instance) {
-
         String query = QueryFactory.createInsertOneQuery(instance);
         int rowsAffected = 0;
         try {
+            Connection con = ConnectionPool.getConnection();
             Statement stmt = con.createStatement();
             rowsAffected = stmt.executeUpdate(query);
         } catch (Exception e) {
@@ -144,7 +136,7 @@ class MysqlCon<T> {
     }
 
     public boolean initTable() {
-        try (Statement statement = con.createStatement()) {
+        try (Connection con = ConnectionPool.getConnection(); Statement statement = con.createStatement()) {
             return statement.execute(QueryFactory.createTableMySQLStatement(clz));
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -153,59 +145,49 @@ class MysqlCon<T> {
 
     public boolean truncateTable() {
         String queryString = "TRUNCATE TABLE " + clz.getSimpleName().toLowerCase() + ";";
-        try (Statement statement = con.createStatement()){
+        try (Connection con = ConnectionPool.getConnection();
+             Statement statement = con.createStatement()){
             return statement.execute(queryString);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void close() {
-        try {
-            con.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+    public void updateSingleProperty(int id,String item,String newValue) {
+        try (Connection con = ConnectionPool.getConnection()) {
+            Statement stmt = con.createStatement();
+            stmt.executeUpdate(String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id));
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
+    public void updateRow(int id,T object) {
+        try (Connection con = ConnectionPool.getConnection()){
+            Statement stmt = con.createStatement();
+            StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
+            Field[] fields = clz.getDeclaredFields();
+            for (Field field:
+                    fields) {
+                query.append(field.getName());
+                query.append(" = ");
+                query.append(handleValue(field.get(object)));
+                query.append(" , ");
+            }
+            query.delete(query.length()-3, query.length()-1);
+            query.append(String.format("WHERE id = %d;",id));
+            System.out.println(query);
+            stmt.executeUpdate(String.valueOf(query));
 
-    private SQLProps getConfigs() {
-        InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("MySql.config");
-        if (resourceAsStream == null) {
-            throw new IllegalArgumentException("config file not found!");
-        }
-
-        Properties props = new Properties();
-
-        try {
-            props.load(resourceAsStream);
-            return new SQLProps(props.getProperty("SCHEMA_NAME"), props.getProperty("DB_USER"), props.getProperty("DB_PASSWORD"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private class SQLProps {
-        String schemaName;
-        String username;
-        String password;
-
-        public SQLProps(String schemaName, String username, String password) {
-            this.schemaName = schemaName;
-            this.username = username;
-            this.password = password;
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
-
-    private static String mySqlType(Class<?> clz) {
-        switch (clz.getSimpleName()) {
-            case "int":
-                return "INTEGER";
-            case "String":
-                return "VARCHAR(45)";
-            case "boolean":
-                return "BOOLEAN";
-            default:
-                return "VARCHAR(255)";
+    public void singleItemDeletionByProperty(String property,String value) {
+        try (Connection con = ConnectionPool.getConnection()) {
+            Statement stmt = con.createStatement();
+            stmt.executeUpdate(String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value));
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
-}  
+}
