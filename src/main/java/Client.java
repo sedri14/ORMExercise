@@ -5,14 +5,17 @@ import java.util.List;
 public class Client {
     public static void main(String[] args) {
 
+        MysqlCon<User> repo = new MysqlCon<>(User.class);
         //findAll
-        List<User> users = MysqlCon.findAll(User.class);
-        users.forEach(user -> System.out.println(user));
+        List<User> users = repo.findAll();
+        users.forEach(System.out::println);
 
         System.out.println("--------------------------");
 
         //findOne
-        User user = MysqlCon.findOne(2, User.class);
+        User user = repo.findOne(2);
         System.out.println(user);
+
+        repo.close();
     }
 }
