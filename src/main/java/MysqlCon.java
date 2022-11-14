@@ -143,6 +143,15 @@ class MysqlCon<T> {
         return name + " " + type;
     }
 
+    public boolean deleteTable() {
+        String queryString = "DROP TABLE " + clz.getSimpleName().toLowerCase() + ";";
+        try (Statement statement = con.createStatement()){
+            return statement.execute(queryString);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void close() {
         try {
             con.close();
