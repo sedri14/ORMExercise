@@ -1,9 +1,14 @@
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+
 import Annotations.mySqlColumn;
 
 class MysqlCon<T> {
@@ -15,10 +20,11 @@ class MysqlCon<T> {
     public MysqlCon(Class<T> clz) {
         this.clz = clz;
         try {
+            SQLProps configs = getConfigs();
             Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/myschema",
-                    "root", null);
+                    "jdbc:mysql://localhost:3306/" + configs.schemaName,
+                    configs.username, configs.password);
 
             DatabaseMetaData meta = con.getMetaData();
             if (!meta.getTables(null, null, clz.getSimpleName().toLowerCase(), new String[] {"TABLE"}).next()) {
@@ -123,6 +129,34 @@ class MysqlCon<T> {
             con.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private SQLProps getConfigs() {
+        InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("MySql.config");
+        if (resourceAsStream == null) {
+            throw new IllegalArgumentException("config file not found!");
+        }
+
+        Properties props = new Properties();
+
+        try {
+            props.load(resourceAsStream);
+            return new SQLProps(props.getProperty("SCHEMA_NAME"), props.getProperty("DB_USER"), props.getProperty("DB_PASSWORD"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private class SQLProps {
+        String schemaName;
+        String username;
+        String password;
+
+        public SQLProps(String schemaName, String username, String password) {
+            this.schemaName = schemaName;
+            this.username = username;
+            this.password = password;
         }
     }
 
