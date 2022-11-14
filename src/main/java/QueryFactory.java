@@ -1,6 +1,10 @@
 import Annotations.mySqlColumn;
+import com.google.gson.Gson;
+import org.apache.commons.lang3.ClassUtils;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -89,4 +93,99 @@ public class QueryFactory {
                 return "VARCHAR(255)";
         }
     }
+
+    //Add a single row:
+    //INSERT INTO table_name (column1, column2, column3,etc)
+    //VALUES (value1, value2, value3, etc);
+    public static <T> String createInsertOneQuery(T instance) {
+
+        Class<?> clz = instance.getClass();
+        String tableName = clz.getSimpleName().toLowerCase();
+
+        StringBuilder queryString = new StringBuilder(String.format("INSERT INTO %s (", tableName));
+        StringBuilder columnsString = new StringBuilder();
+        StringBuilder valuesString = new StringBuilder("VALUES (");
+
+        Field[] declaredFields = clz.getDeclaredFields();
+        Iterator<Field> iterator = Arrays.stream(declaredFields).iterator();
+        while (iterator.hasNext()) {
+            Field field = iterator.next();
+            field.setAccessible(true);
+            String fieldName = field.getName();
+            Object val = null;
+            try {
+                val = field.get(instance);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+            columnsString.append(fieldName);
+            Object valToInsert = handleValue(val);
+            valuesString.append(valToInsert);
+
+            if (iterator.hasNext()) {
+                columnsString.append(", ");
+                valuesString.append(", ");
+            }
+        }
+        columnsString.append(")");
+        valuesString.append(")");
+
+        return queryString.append(columnsString).append(valuesString).toString();
+    }
+    public static <T> String createInsertMultipleQuery(List<T> itemList, Class<?> clz) {
+
+        StringBuilder queryString = new StringBuilder("INSERT INTO " + clz.getSimpleName().toLowerCase() + "(");
+        Field[] declaredFields = clz.getDeclaredFields();
+
+        //string list of columns (column1, column2, column3,etc)
+        StringBuilder columnsString = new StringBuilder();
+
+        for (Field field : declaredFields) {
+            field.setAccessible(true);
+            String fieldName = field.getName();
+            columnsString.append(fieldName);
+            columnsString.append(", ");
+        }
+
+        columnsString.delete(columnsString.length() - 1, columnsString.length());
+        columnsString.append(")");
+
+        //string lists of values (value1, value2, value3, etc),(value1, value2, value3, etc),(value1, value2, value3, etc)
+        StringBuilder valuesString = new StringBuilder("VALUES ");
+        for (T item : itemList) {
+            valuesString.append("(");
+            //make a new iterator for each iteration???
+            for (Field field : declaredFields) {
+                //Field field = iterator.next();
+                field.setAccessible(true);
+                //String fieldName = field.getName();
+                Object val = null;
+                try {
+                    val = field.get(item);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+                Object valToInsert = handleValue(val);
+                valuesString.append(valToInsert);
+                valuesString.append(", ");
+            }
+            valuesString.delete(valuesString.length() - 1, valuesString.length());
+            valuesString.append(")");
+            valuesString.append(",");
+        }
+        valuesString.delete(valuesString.length() - 1, valuesString.length());
+
+        String res = queryString.append(columnsString).append(valuesString).toString();
+        return res;
+    }
+    private static String handleValue(Object val) {
+        if (ClassUtils.isPrimitiveOrWrapper(val.getClass())) {
+            return val.toString();
+        } else if (val instanceof String) {
+            return String.format("\"%s\"", val.toString());
+        } else {
+            return new Gson().toJson(val);
+        }
+    }
+
 }
