@@ -328,18 +328,19 @@ class MysqlCon<T> {
     public void updateRow(int id,T object) {
         try {
             Statement stmt = con.createStatement();
-            String query= String.format("UPDATE %s SET ",clz.getSimpleName().toLowerCase());
+            StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
             Field[] fields = clz.getDeclaredFields();
             for (Field field:
                  fields) {
-                query+=field.getName();
-                query+=" = ";
-                query+=field.get(object);
-                query+= " , ";
+                query.append(field.getName());
+                query.append(" = ");
+                query.append(handleValue(field.get(object)));
+                query.append(" , ");
             }
-            query+=String.format("WHERE id = %d;",id);
+            query.delete(query.length()-3, query.length()-1);
+            query.append(String.format("WHERE id = %d;",id));
             System.out.println(query);
-            //stmt.executeUpdate(String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id));
+            stmt.executeUpdate(String.valueOf(query));
 
         } catch (Exception e) {
             System.out.println(e);
