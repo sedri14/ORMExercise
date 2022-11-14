@@ -143,8 +143,8 @@ class MysqlCon<T> {
         return name + " " + type;
     }
 
-    public boolean deleteTable() {
-        String queryString = "DROP TABLE " + clz.getSimpleName().toLowerCase() + ";";
+    public boolean truncateTable() {
+        String queryString = "TRUNCATE TABLE " + clz.getSimpleName().toLowerCase() + ";";
         try (Statement statement = con.createStatement()){
             return statement.execute(queryString);
         } catch (SQLException e) {
