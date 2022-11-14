@@ -7,6 +7,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import Annotations.mySqlColumn;
+import com.google.gson.Gson;
+import org.apache.commons.lang3.ClassUtils;
 
 class MysqlCon<T> {
 
@@ -24,7 +26,7 @@ class MysqlCon<T> {
                     configs.username, configs.password);
 
             DatabaseMetaData meta = con.getMetaData();
-            if (!meta.getTables(null, null, clz.getSimpleName().toLowerCase(), new String[] {"TABLE"}).next()) {
+            if (!meta.getTables(null, null, clz.getSimpleName().toLowerCase(), new String[]{"TABLE"}).next()) {
                 initTable();
             }
         } catch (SQLException e) {
@@ -92,6 +94,70 @@ class MysqlCon<T> {
         return null;
     }
 
+    //Add a single row:
+    //INSERT INTO table_name (column1, column2, column3,etc)
+    //VALUES (value1, value2, value3, etc);
+    public <T> void insertOne(T instance) {
+
+        int rowsAffected = 0;
+        try {
+            Statement stmt = con.createStatement();
+            rowsAffected = stmt.executeUpdate(buildInsertQueryString(instance));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        System.out.println("Rows affected:" + rowsAffected);
+    }
+
+    public <T> String buildInsertQueryString(T instance){
+        StringBuilder queryString = new StringBuilder("INSERT INTO " + clz.getSimpleName().toLowerCase() + "(");
+        StringBuilder columnsString = new StringBuilder();
+        StringBuilder valuesString = new StringBuilder("VALUES (");
+
+        Field[] declaredFields = clz.getDeclaredFields();
+        Iterator<Field> iterator = Arrays.stream(declaredFields).iterator();
+        while (iterator.hasNext()) {
+            Field field = iterator.next();
+            field.setAccessible(true);
+            String fieldName = field.getName();
+            Object val = null;
+            try {
+                val = field.get(instance);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+            columnsString.append(fieldName);
+            Object valToInsert = handleValue(val);
+            valuesString.append(valToInsert);
+
+            if (iterator.hasNext()) {
+                columnsString.append(", ");
+                valuesString.append(", ");
+            }
+        }
+        columnsString.append(")");
+        valuesString.append(")");
+
+        return queryString.append(columnsString).append(valuesString).toString();
+    }
+
+    private String handleValue(Object val) {
+        if (ClassUtils.isPrimitiveOrWrapper(val.getClass())) {
+            return val.toString();
+        } else if (val instanceof String) {
+            return String.format("\"%s\"", val.toString());
+        } else {
+            return new Gson().toJson(val);
+        }
+    }
+
+    //Add multiple rows:
+//    INSERT INTO table_name (column1, column2, column3,etc)
+//    VALUES
+//            (value1, value2, value3, etc),
+//    (value1, value2, value3, etc),
+//            (value1, value2, value3, etc);
+
 
     public T createSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
         Constructor<T> constructor = clz.getConstructor(null);
@@ -110,7 +176,7 @@ class MysqlCon<T> {
     }
 
     public boolean initTable() {
-        try (Statement statement = con.createStatement()){
+        try (Statement statement = con.createStatement()) {
             return statement.execute(createTableMySQLStatement());
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -234,7 +300,7 @@ class MysqlCon<T> {
     }
 
     private static String mySqlType(Class<?> clz) {
-        switch(clz.getSimpleName()) {
+        switch (clz.getSimpleName()) {
             case "int":
                 return "INTEGER";
             case "String":

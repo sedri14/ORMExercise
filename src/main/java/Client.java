@@ -22,6 +22,12 @@ public class Client {
         List<User> allMoshes = repo.getByProperty("name", "moshe");
         System.out.println(allMoshes);
 
+        System.out.println("--------------------------");
+
+        //insetOne
+        User user1 = new User(105,"TestUser",35);
+        repo.insertOne(user1);
+
         repo.close();
     }
 }
