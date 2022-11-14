@@ -2,8 +2,6 @@ import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -122,6 +120,15 @@ class MysqlCon<T> {
             name = field.getName();
         }
         return name + " " + type;
+    }
+
+    public boolean deleteTable() {
+        String queryString = "DROP TABLE " + clz.getSimpleName().toLowerCase() + ";";
+        try (Statement statement = con.createStatement()){
+            return statement.execute(queryString);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void close() {
