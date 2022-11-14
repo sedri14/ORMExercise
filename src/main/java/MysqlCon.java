@@ -4,7 +4,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 
 import Annotations.mySqlColumn;
 import com.google.gson.Gson;
@@ -19,7 +22,7 @@ class MysqlCon<T> {
     public MysqlCon(Class<T> clz) {
         this.clz = clz;
         try {
-            SQLProps configs = getConfigs();
+            ConfigManager configs = new ConfigManager();
             Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/" + configs.schemaName,
@@ -214,6 +217,13 @@ class MysqlCon<T> {
         }
     }
 
+    //Add multiple rows:
+//    INSERT INTO table_name (column1, column2, column3,etc)
+//    VALUES
+//            (value1, value2, value3, etc),
+//    (value1, value2, value3, etc),
+//            (value1, value2, value3, etc);
+
 
     public T createSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
         Constructor<T> constructor = clz.getConstructor(null);
@@ -239,80 +249,9 @@ class MysqlCon<T> {
         }
     }
 
-    private String createTableMySQLStatement() {
-        StringBuilder queryString = new StringBuilder("CREATE TABLE " + clz.getSimpleName().toLowerCase() + "(");
-        Field[] declaredFields = clz.getDeclaredFields();
-        for (Field field : declaredFields) {
-            queryString.append(createColumnMySqlDeclaration(field)).append(", ");
-        }
-
-        queryString.delete(queryString.length() - 2, queryString.length());
-        queryString.append(primaryKeyString(declaredFields));
-        queryString.append(");");
-        return queryString.toString();
-    }
-
-    private String createColumnMySqlDeclaration(Field field) {
-        mySqlColumn mySqlAnnotation = field.getAnnotation(mySqlColumn.class);
-        String type;
-        String name;
-        String extras = "";
-        if (mySqlAnnotation != null) {
-            if (mySqlAnnotation.type() != mySqlColumn.MySqlType.DEFAULT) {
-                type = mySqlAnnotation.type().toString();
-                if (mySqlAnnotation.length() != 0) {
-                    type += "(" + mySqlAnnotation.length() + ")";
-                }
-            } else {
-                type = mySqlType(field.getType());
-            }
-
-            if (!Objects.equals(mySqlAnnotation.columnName(), "")) {
-                name = mySqlAnnotation.columnName();
-            } else {
-                name = field.getName();
-            }
-
-            if (mySqlAnnotation.notNull()) {
-                extras += " NOT NULL";
-            }
-            if (mySqlAnnotation.unique()) {
-                extras += " UNIQUE";
-            }
-            if (mySqlAnnotation.autoIncrement()) {
-                extras += " AUTO_INCREMENT";
-            }
-        } else {
-            type = mySqlType(field.getType());
-            name = field.getName();
-        }
-        return name + " " + type + extras;
-    }
-
-    private String primaryKeyString(Field[] fields) {
-        List<Field> listFields = List.of(fields);
-        List<Field> primaryKeys = listFields.stream().filter(field -> field.isAnnotationPresent(mySqlColumn.class)).filter(field -> field.getAnnotation(mySqlColumn.class).primaryKey()).collect(Collectors.toList());
-        if (primaryKeys.isEmpty()) {
-            return "";
-        }
-
-        StringBuilder primaryKeyConstraint = new StringBuilder(", CONSTRAINT PK_test PRIMARY KEY (");
-        for (Field field : primaryKeys) {
-            if (field.getAnnotation(mySqlColumn.class).columnName().equals("")) {
-                primaryKeyConstraint.append(field.getName());
-            } else {
-                primaryKeyConstraint.append(field.getAnnotation(mySqlColumn.class).columnName());
-            }
-            primaryKeyConstraint.append(", ");
-        }
-        primaryKeyConstraint.delete(primaryKeyConstraint.length() - 2, primaryKeyConstraint.length());
-        primaryKeyConstraint.append(")");
-        return primaryKeyConstraint.toString();
-    }
-
     public boolean truncateTable() {
         String queryString = "TRUNCATE TABLE " + clz.getSimpleName().toLowerCase() + ";";
-        try (Statement statement = con.createStatement()) {
+        try (Statement statement = con.createStatement()){
             return statement.execute(queryString);
         } catch (SQLException e) {
             throw new RuntimeException(e);

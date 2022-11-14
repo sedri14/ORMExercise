@@ -1,6 +1,5 @@
 import Entities.User;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class Client {
