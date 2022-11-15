@@ -35,10 +35,9 @@ class MysqlCon<T> {
 
 
     public List<T> getByProperty(String propName, String propVal) {
-
         String query = QueryFactory.createGetByPropertyQuery(clz, propName, propVal);
-        try (Connection con = ConnectionPool.getConnection()) {
-            ResultSet rs = con.createStatement().executeQuery(query);
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
+            ResultSet rs = stmt.executeQuery(query);
 
             return listResults(rs);
 
@@ -52,8 +51,8 @@ class MysqlCon<T> {
 
     public T findOne(int id) {
         String query = QueryFactory.createFindOneQuery(clz, id);
-        try (Connection con = ConnectionPool.getConnection()) {
-            ResultSet rs = con.createStatement().executeQuery(query);
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
+            ResultSet rs = stmt.executeQuery(query);
 
             return (rs.next() ? createSingleInstance(rs) : null);
 
@@ -65,8 +64,8 @@ class MysqlCon<T> {
 
     public List<T> findAll() {
         String query = QueryFactory.createFindAllQuery(clz);
-        try (Connection con = ConnectionPool.getConnection()) {
-            ResultSet rs = con.createStatement().executeQuery(query);
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
+            ResultSet rs = stmt.executeQuery(query);
 
             return listResults(rs);
 
@@ -79,9 +78,8 @@ class MysqlCon<T> {
     public <T> int insertOne(T instance) {
         String query = QueryFactory.createInsertOneQuery(instance);
         int rowsAffected = 0;
-        try {
-            Connection con = ConnectionPool.getConnection();
-            rowsAffected = con.createStatement().executeUpdate(query);
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();){
+            rowsAffected = stmt.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -91,11 +89,10 @@ class MysqlCon<T> {
     }
 
     public <T> int insertMultiple(List<T> itemList) {
-
         String query = QueryFactory.createInsertMultipleQuery(itemList, clz);
         int rowsAffected = 0;
-        try (Connection con = ConnectionPool.getConnection()) {
-            rowsAffected = con.createStatement().executeUpdate(query);
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
+            rowsAffected = stmt.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -130,8 +127,8 @@ class MysqlCon<T> {
     }
 
     public boolean initTable() {
-        try (Connection con = ConnectionPool.getConnection(); Statement statement = con.createStatement()) {
-            return statement.execute(QueryFactory.createTableMySQLStatement(clz));
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement()) {
+            return stmt.execute(QueryFactory.createTableMySQLStatement(clz));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -139,9 +136,8 @@ class MysqlCon<T> {
 
     public boolean truncateTable() {
         String queryString = "TRUNCATE TABLE " + clz.getSimpleName().toLowerCase() + ";";
-        try (Connection con = ConnectionPool.getConnection();
-             Statement statement = con.createStatement()) {
-            return statement.execute(queryString);
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
+            return stmt.execute(queryString);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -150,8 +146,8 @@ class MysqlCon<T> {
     public int updateSingleProperty(int id, String item, String newValue) {
         String query = QueryFactory.createUpdateSinglePropertyQuery(clz, item, newValue, id);
         int rowsAffected = 0;
-        try (Connection con = ConnectionPool.getConnection()) {
-            rowsAffected = con.createStatement().executeUpdate(query);
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
+            rowsAffected = stmt.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -160,9 +156,8 @@ class MysqlCon<T> {
 
     public int updateRow(int id, T object) {
         int rowsAffected = 0;
-        try (Connection con = ConnectionPool.getConnection()) {
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             String query = QueryFactory.createUpdateRowQuery(clz, object, id);
-            Statement stmt = con.createStatement();
             rowsAffected = stmt.executeUpdate(String.valueOf(query));
 
         } catch (Exception e) {
@@ -174,8 +169,7 @@ class MysqlCon<T> {
     public int singleItemDeletionByProperty(String property, String value) {
         String query = QueryFactory.createDeleteQuery(clz, property, value);
         int rowsAffected = 0;
-        try (Connection con = ConnectionPool.getConnection()) {
-            Statement stmt = con.createStatement();
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
