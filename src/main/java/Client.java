@@ -6,8 +6,8 @@ import java.util.List;
 public class Client {
     public static void main(String[] args) {
 
-        MysqlCon<User> repo = new MysqlCon<>(User.class);
-        repo.updateSingleProperty(2,"age",2);
+        //MysqlCon<User> repo = new MysqlCon<>(User.class);
+        //repo.updateSingleProperty(2,"age",2);
 //        //findAll
 //        List<User> users = repo.findAll();
 //        users.forEach(System.out::println);

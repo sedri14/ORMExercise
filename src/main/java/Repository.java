@@ -28,10 +28,8 @@ class Repository<T> {
 
 
     public List<T> getByProperty(String propName, String propVal) {
-        String query = QueryFactory.createGetByPropertyQuery(clz, propName, propVal);
-        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
         if(propName==null || propVal==null) throw new IllegalArgumentException();
-        String query = QueryFactory.createGetByPropertyQuery(clz, propName,propVal);
+        String query = QueryFactory.createGetByPropertyQuery(clz, propName, propVal);
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(query);
@@ -46,7 +44,7 @@ class Repository<T> {
         return null;
     }
 
-    public T findOne(int id) {
+        public T findOne(int id) {
         String query = QueryFactory.createFindOneQuery(clz, id);
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             ResultSet rs = stmt.executeQuery(query);
@@ -163,21 +161,15 @@ class Repository<T> {
         System.out.println("The row updated successfully");
         return rowsAffected;
     }
-    public void singleAndMultipleItemDeletionByProperty(String property,String value) {
+    public int singleAndMultipleItemDeletionByProperty(String property,String value) {
+        String query = QueryFactory.createDeleteQuery(clz,property,value);
+        int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
-            String query = QueryFactory.createDeleteQuery(clz,property,value);
-            stmt.executeUpdate(query);
-
-    public int singleItemDeletionByProperty(String property, String value) {
-        String query = QueryFactory.createDeleteQuery(clz, property, value);
-        int rowsAffected = 0;
-        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
         }
-
         return rowsAffected;
     }
 }
