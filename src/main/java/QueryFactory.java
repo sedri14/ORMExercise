@@ -59,6 +59,10 @@ public class QueryFactory {
 
     // -----------------------HELPERS-----------------------//
     public static String handleValue(Object val) {
+
+        if (val == null) {
+            return "NULL";
+        }
         if (ClassUtils.isPrimitiveOrWrapper(val.getClass())) {
             return (val instanceof Character) ? String.format("\'%c\'", val) : val.toString();
         } else if (val instanceof String) {
