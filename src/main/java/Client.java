@@ -6,7 +6,8 @@ import java.util.List;
 public class Client {
     public static void main(String[] args) {
 
-        MysqlCon<User> repo = new MysqlCon<>(User.class);
+        //MysqlCon<User> repo = new MysqlCon<>(User.class);
+        //repo.updateSingleProperty(2,"age",2);
 //        //findAll
 //        List<User> users = repo.findAll();
 //        users.forEach(System.out::println);
@@ -30,7 +31,7 @@ public class Client {
 //        repo.insertOne(user1);
 
         System.out.println("--------------------------");
-
+/*
         //insertMultiple
         List<User> usersToInsert = new ArrayList<>();
         usersToInsert.add(new User(888, "Gogo", 28));
@@ -40,6 +41,6 @@ public class Client {
         repo.insertMultiple(usersToInsert);
 
         //repo.insertOne(new User(2,"safaa",20));
-        repo.updateRow(2,new User(2,"saf",33));
+        repo.updateRow(2,new User(2,"saf",33));*/
     }
 }

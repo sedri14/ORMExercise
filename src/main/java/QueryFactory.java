@@ -27,7 +27,55 @@ public class QueryFactory {
     public static String createFindAllQuery(Class<?> clz) {
         return String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase());
     }
+    public static String createUpdateSinglePropertyQuery(Class<?> clz,String item,Object newValue,int id){
 
+        Field[] fields = clz.getDeclaredFields();
+        for (Field field:
+                fields) {
+            if(field.getName().equals(item)){
+                Class<?> fieldType = field.getType();
+                if(newValue.getClass().equals(fieldType)){
+                    newValue = handleValue(newValue);
+                    return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id);
+                } else{
+                    throw new IllegalArgumentException("The value and the required field type are different");
+                }
+            }
+
+        }
+        throw  new IllegalArgumentException("There is no field with name "+ item);
+    }
+    public static String createDeleteQuery(Class<?> clz,String property,Object value){
+        Field[] fields = clz.getDeclaredFields();
+        for (Field field:
+                fields) {
+            if(field.getName().equals(property)){
+                Class<?> fieldType = field.getType();
+                if(property.getClass().equals(fieldType)){
+                    value = handleValue(value);
+                    return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value);
+                } else{
+                    throw new IllegalArgumentException("The value and the required field's type are different");
+                }
+            }
+
+        }
+        throw  new IllegalArgumentException("There is no field with name "+ property);
+    }
+    public static <T> String createUpdateRowQuery(Class<?> clz,T object,int id) throws IllegalAccessException {
+        StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
+        Field[] fields = clz.getDeclaredFields();
+        for (Field field:
+                fields) {
+            query.append(field.getName());
+            query.append(" = ");
+            query.append(QueryFactory.handleValue(field.get(object)));
+            query.append(" , ");
+        }
+        query.delete(query.length()-3, query.length()-1);
+        query.append(String.format("WHERE id = %d;",id));
+        return String.valueOf(query);
+    }
     public static <T> String createInsertOneQuery(T instance) {
 
         Class<?> clz = instance.getClass();
@@ -194,26 +242,7 @@ public class QueryFactory {
                 return "TEXT";
         }
     }
-    public static String createUpdateSinglePropertyQuery(Class<?> clz,String item,String newValue,int id){
-        return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id);
-    }
-    public static String createDeleteQuery(Class<?> clz,String property,String value){
-        return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value);
-    }
-    public static <T> String createUpdateRowQuery(Class<?> clz,T object,int id) throws IllegalAccessException {
-        StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
-        Field[] fields = clz.getDeclaredFields();
-        for (Field field:
-                fields) {
-            query.append(field.getName());
-            query.append(" = ");
-            query.append(QueryFactory.handleValue(field.get(object)));
-            query.append(" , ");
-        }
-        query.delete(query.length()-3, query.length()-1);
-        query.append(String.format("WHERE id = %d;",id));
-        return String.valueOf(query);
-    }
+
     public static <T> String createGetByPropertyQuery(Class<T> clz, String propName, String propVal) {
         return String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(), propName.toLowerCase(), propVal.toLowerCase());
     }
