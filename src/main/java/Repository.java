@@ -28,6 +28,7 @@ class Repository<T> {
 
 
     public List<T> getByProperty(String propName, String propVal) {
+        if(propName == null || propVal == null) throw new IllegalArgumentException();
         String query = QueryFactory.createGetByPropertyQuery(clz, propName, propVal);
         List<T> results = null;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
@@ -69,6 +70,7 @@ class Repository<T> {
     }
 
     public <T> int insertOne(T instance) {
+        if(instance==null) throw new IllegalArgumentException("cannot insert a null instance to database!");
         String query = QueryFactory.createInsertOneQuery(instance);
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
@@ -76,8 +78,8 @@ class Repository<T> {
         } catch (SQLException e) {
             throw new RuntimeException("DB error", e);
         }
-
         System.out.println("Rows affected:" + rowsAffected);
+
         return rowsAffected;
     }
 
@@ -104,7 +106,6 @@ class Repository<T> {
     }
 
     private T createSingleInstance(ResultSet rs) {
-
         T clzInstance;
         try {
             Constructor<T> constructor = clz.getConstructor(null);
@@ -150,15 +151,17 @@ class Repository<T> {
         }
     }
 
-    public int updateSingleProperty(int id, String item, String newValue) {
-        String query = QueryFactory.createUpdateSinglePropertyQuery(clz, item, newValue, id);
+    public int updateSingleProperty(int id,String item,Object newValue) {
+        String query = QueryFactory.createUpdateSinglePropertyQuery(clz,item,newValue,id);
         int rowsAffected = 0;
-        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
+        try (Connection con = ConnectionPool.getConnection();Statement stmt = con.createStatement()) {
             rowsAffected = stmt.executeUpdate(query);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             //System.out.println(e.getMessage());
             throw new RuntimeException("DB error", e);
         }
+        System.out.println("1 property has been updated successfully");
+
         return rowsAffected;
     }
 
@@ -171,11 +174,12 @@ class Repository<T> {
         } catch (SQLException e) {
             throw new RuntimeException("DB error", e);
         }
+        System.out.println("The row updated successfully");
+
         return rowsAffected;
     }
-
-    public int singleItemDeletionByProperty(String property, String value) {
-        String query = QueryFactory.createDeleteQuery(clz, property, value);
+    public int singleAndMultipleItemDeletionByProperty(String property,Object value) {
+        String query = QueryFactory.createDeleteQuery(clz,property,value);
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
