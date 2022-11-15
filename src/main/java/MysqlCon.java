@@ -37,7 +37,7 @@ class MysqlCon<T> {
 
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(),propName.toLowerCase(),propVal.toLowerCase()));
+            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(), propName.toLowerCase(), propVal.toLowerCase()));
             List<T> results = new ArrayList<>();
             while (rs.next()) {
                 results.add(createSingleInstance(rs));
@@ -46,18 +46,19 @@ class MysqlCon<T> {
             return results;
         } catch (SQLException e) {
             System.out.println(e.getMessage());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println(e);
         }
         return null;
     }
 
     public T findOne(int id) {
+        String query = QueryFactory.createFindOneQuery(clz, id);
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE id=%d", clz.getSimpleName().toLowerCase(), id));
+            ResultSet rs = stmt.executeQuery(query);
 
+            //TODO: ResultSet reader class
             Constructor<T> constructor = clz.getConstructor(null);
             T clzInstance = constructor.newInstance();
             if (rs.next()) {
@@ -74,10 +75,11 @@ class MysqlCon<T> {
     }
 
     public List<T> findAll() {
-
+        String query = QueryFactory.createFindAllQuery(clz);
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase()));
+            ResultSet rs = stmt.executeQuery(query);
+
             List<T> results = new ArrayList<>();
             while (rs.next()) {
                 results.add(createSingleInstance(rs));
@@ -90,71 +92,32 @@ class MysqlCon<T> {
         return null;
     }
 
-    //Add a single row:
-    //INSERT INTO table_name (column1, column2, column3,etc)
-    //VALUES (value1, value2, value3, etc);
     public <T> void insertOne(T instance) {
-
+        String query = QueryFactory.createInsertOneQuery(instance);
         int rowsAffected = 0;
         try {
             Connection con = ConnectionPool.getConnection();
             Statement stmt = con.createStatement();
-            rowsAffected = stmt.executeUpdate(buildInsertQueryString(instance));
+            rowsAffected = stmt.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
         }
         System.out.println("Rows affected:" + rowsAffected);
     }
 
-    public <T> String buildInsertQueryString(T instance){
-        StringBuilder queryString = new StringBuilder("INSERT INTO " + clz.getSimpleName().toLowerCase() + "(");
-        StringBuilder columnsString = new StringBuilder();
-        StringBuilder valuesString = new StringBuilder("VALUES (");
+    public <T> void insertMultiple(List<T> itemList) {
 
-        Field[] declaredFields = clz.getDeclaredFields();
-        Iterator<Field> iterator = Arrays.stream(declaredFields).iterator();
-        while (iterator.hasNext()) {
-            Field field = iterator.next();
-            field.setAccessible(true);
-            String fieldName = field.getName();
-            Object val = null;
-            try {
-                val = field.get(instance);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-            columnsString.append(fieldName);
-            Object valToInsert = handleValue(val);
-            valuesString.append(valToInsert);
-
-            if (iterator.hasNext()) {
-                columnsString.append(", ");
-                valuesString.append(", ");
-            }
+        String query = QueryFactory.createInsertMultipleQuery(itemList, clz);
+        int rowsAffected = 0;
+        try (Connection con = ConnectionPool.getConnection()) {
+            Statement stmt = con.createStatement();
+            rowsAffected = stmt.executeUpdate(query);
+        } catch (Exception e) {
+            System.out.println(e);
         }
-        columnsString.append(")");
-        valuesString.append(")");
+        System.out.println("Rows affected:" + rowsAffected);
 
-        return queryString.append(columnsString).append(valuesString).toString();
     }
-
-    private String handleValue(Object val) {
-        if (ClassUtils.isPrimitiveOrWrapper(val.getClass())) {
-            return val.toString();
-        } else if (val instanceof String) {
-            return String.format("\"%s\"", val.toString());
-        } else {
-            return new Gson().toJson(val);
-        }
-    }
-
-    //Add multiple rows:
-//    INSERT INTO table_name (column1, column2, column3,etc)
-//    VALUES
-//            (value1, value2, value3, etc),
-//    (value1, value2, value3, etc),
-//            (value1, value2, value3, etc);
-
 
     public T createSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
         Constructor<T> constructor = clz.getConstructor(null);
@@ -207,7 +170,7 @@ class MysqlCon<T> {
                     fields) {
                 query.append(field.getName());
                 query.append(" = ");
-                query.append(handleValue(field.get(object)));
+                query.append(QueryFactory.handleValue(field.get(object)));
                 query.append(" , ");
             }
             query.delete(query.length()-3, query.length()-1);
