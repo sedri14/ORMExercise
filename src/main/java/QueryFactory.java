@@ -64,7 +64,7 @@ public class QueryFactory {
         } else if (val instanceof String) {
             return String.format("\"%s\"", val.toString());
         } else {
-            return new Gson().toJson(val);
+            return String.format("\"%s\"", new Gson().toJson(val));
         }
     }
 
@@ -213,5 +213,8 @@ public class QueryFactory {
         query.delete(query.length()-3, query.length()-1);
         query.append(String.format("WHERE id = %d;",id));
         return String.valueOf(query);
+    }
+    public static <T> String createGetByPropertyQuery(Class<T> clz, String propName, String propVal) {
+        return String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(), propName.toLowerCase(), propVal.toLowerCase());
     }
 }

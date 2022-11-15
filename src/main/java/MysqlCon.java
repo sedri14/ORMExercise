@@ -35,9 +35,10 @@ class MysqlCon<T> {
 
     public List<T> getByProperty(String propName, String propVal) {
 
+        String query = QueryFactory.createGetByPropertyQuery(clz, propName,propVal);
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(), propName.toLowerCase(), propVal.toLowerCase()));
+            ResultSet rs = stmt.executeQuery(query);
             List<T> results = new ArrayList<>();
             while (rs.next()) {
                 results.add(createSingleInstance(rs));
@@ -58,13 +59,11 @@ class MysqlCon<T> {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(query);
 
-            //TODO: ResultSet reader class
-            Constructor<T> constructor = clz.getConstructor(null);
-            T clzInstance = constructor.newInstance();
+            T clzInstance;
             if (rs.next()) {
-                fieldsAssignment(clzInstance, rs);
+                clzInstance = createSingleInstance(rs);
             } else {
-
+                return null;
             }
 
             return clzInstance;
