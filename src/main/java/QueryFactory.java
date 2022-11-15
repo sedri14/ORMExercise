@@ -17,7 +17,7 @@ public class QueryFactory {
         queryString.delete(queryString.length() - 2, queryString.length());
         queryString.append(createPrimaryKeyString(declaredFields));
         queryString.append(");");
-        return queryString.toString();
+        return String.valueOf(queryString);
     }
 
     public static String createFindOneQuery(Class<?> clz, int id) {
@@ -34,7 +34,7 @@ public class QueryFactory {
                 fields) {
             if(field.getName().equals(item)){
                 Class<?> fieldType = field.getType();
-                if(newValue.getClass().equals(fieldType)){
+                if(newValue.getClass().equals(fieldType) || ClassUtils.isAssignable(newValue.getClass(), fieldType)){
                     newValue = handleValue(newValue);
                     return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id);
                 } else{
@@ -51,7 +51,7 @@ public class QueryFactory {
                 fields) {
             if(field.getName().equals(property)){
                 Class<?> fieldType = field.getType();
-                if(value.getClass().equals(fieldType)){
+                if(value.getClass().equals(fieldType) || ClassUtils.isAssignable(value.getClass(), fieldType)){
                     value = handleValue(value);
                     return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value);
                 } else{

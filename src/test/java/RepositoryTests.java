@@ -113,7 +113,7 @@ public class RepositoryTests {
         repo = new Repository<>(clz);
         repo.insertOne(o);
 
-        Assertions.assertEquals(1, repo.updateSingleProperty(1, "id", "2"), "update by property returns unexpected value");
+        Assertions.assertEquals(1, repo.updateSingleProperty(1, "id", 2), "update by property returns unexpected value");
     }
 
     @ParameterizedTest
@@ -122,6 +122,6 @@ public class RepositoryTests {
         repo = new Repository<>(clz);
         repo.insertOne(o);
 
-        Assertions.assertEquals(1, repo.singleAndMultipleItemDeletionByProperty("id", "1"));
+        Assertions.assertEquals(1, repo.singleAndMultipleItemDeletionByProperty("id", 1));
     }
 }
