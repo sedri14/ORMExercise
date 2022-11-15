@@ -25,7 +25,7 @@ public class Client {
         User user1 = new User(7878,"Lulu",25);
 
         repo.insertOne(user1);
-        //repo.insertOne(user1);
+        repo.insertOne(user1);
         System.out.println("--------------------------");
         //insertMultiple
         List<User> usersToInsert = new ArrayList<>();

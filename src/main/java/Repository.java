@@ -74,8 +74,14 @@ class Repository<T> {
             ResultSet rs = stmt.executeQuery(query);
             result = (rs.next() ? createSingleInstance(rs) : null);
         } catch (SQLException e) {
-            logger.error(e.getMessage() + e.getErrorCode());
-            throw new RuntimeException("DB error", e);
+            if (e.getErrorCode() == 1062)
+            {
+                logger.error(String.format("Can't add item. Id %d already exists", id));
+                throw new RuntimeException(String.format("Can't add item. Id %d already exists", id), e);
+            }
+            else {
+                throw new RuntimeException(e);
+            }
         }
         logger.info("findOne execute query finished");
 
