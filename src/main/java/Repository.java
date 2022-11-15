@@ -1,3 +1,5 @@
+import Annotations.mySqlColumn;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -19,10 +21,29 @@ class Repository<T> {
         try (Connection con = ConnectionPool.getConnection()) {
             DatabaseMetaData meta = con.getMetaData();
             if (!meta.getTables(null, null, clz.getSimpleName().toLowerCase(), new String[]{"TABLE"}).next()) {
+                checkClassForCompatibility(clz);
                 initTable();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void checkClassForCompatibility(Class<?> clz) {
+        Field[] declaredFields = clz.getDeclaredFields();
+        boolean isAutoIncrementPresent = false;
+        for (Field field : declaredFields) {
+            if (field.isAnnotationPresent(mySqlColumn.class)) {
+                mySqlColumn annotation = field.getAnnotation(mySqlColumn.class);
+                if (annotation.autoIncrement()) {
+                    if (!annotation.primaryKey()) {
+                        throw new IllegalArgumentException("Class fields cant have Auto_Increment without Primary_Key");
+                    } else if (isAutoIncrementPresent) {
+                        throw new IllegalArgumentException("Class cant have two Auto_Increment fields");
+                    }
+                    isAutoIncrementPresent = true;
+                }
+            }
         }
     }
 
