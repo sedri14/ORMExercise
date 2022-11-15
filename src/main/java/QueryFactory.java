@@ -194,4 +194,24 @@ public class QueryFactory {
                 return "TEXT";
         }
     }
+    public static String createUpdateSinglePropertyQuery(Class<?> clz,String item,String newValue,int id){
+        return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id);
+    }
+    public static String createDeleteQuery(Class<?> clz,String property,String value){
+        return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value);
+    }
+    public static <T> String createUpdateRowQuery(Class<?> clz,T object,int id) throws IllegalAccessException {
+        StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
+        Field[] fields = clz.getDeclaredFields();
+        for (Field field:
+                fields) {
+            query.append(field.getName());
+            query.append(" = ");
+            query.append(QueryFactory.handleValue(field.get(object)));
+            query.append(" , ");
+        }
+        query.delete(query.length()-3, query.length()-1);
+        query.append(String.format("WHERE id = %d;",id));
+        return String.valueOf(query);
+    }
 }
