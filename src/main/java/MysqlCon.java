@@ -154,7 +154,7 @@ class MysqlCon<T> {
         }
     }
 
-    public void updateSingleProperty(int id,String item,String newValue) {
+    public void updateSingleProperty(int id,String item,Object newValue) {
         String query = QueryFactory.createUpdateSinglePropertyQuery(clz,item,newValue,id);
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
