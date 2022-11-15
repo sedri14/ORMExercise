@@ -32,15 +32,15 @@ class Repository<T> {
     }
 
 
-    public List<T> getByProperty(String propName, String value) {
-        if(propName == null || value == null) throw new IllegalArgumentException();
-        String query = QueryFactory.createGetByPropertyQuery(clz, propName, value);
+    public List<T> getByProperty(String property, Object value) {
+        if(property == null || value == null) throw new IllegalArgumentException();
+        String query = QueryFactory.createGetByPropertyQuery(clz, property, value);
         List<T> results = null;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             ResultSet rs = stmt.executeQuery(query);
             results = listResults(rs);
         } catch (SQLException e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage() + e.getErrorCode());
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -56,7 +56,7 @@ class Repository<T> {
             ResultSet rs = stmt.executeQuery(query);
             result = (rs.next() ? createSingleInstance(rs) : null);
         } catch (SQLException e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage() + e.getErrorCode());
             throw new RuntimeException("DB error", e);
         }
         logger.info("findOne execute query finished");
@@ -72,7 +72,7 @@ class Repository<T> {
             ResultSet rs = stmt.executeQuery(query);
             results = listResults(rs);
         } catch (SQLException e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage() + e.getErrorCode());
             throw new RuntimeException("DB error", e);
         }
         logger.info("findAll execute query finished");
