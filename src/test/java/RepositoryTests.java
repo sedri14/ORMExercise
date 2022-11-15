@@ -122,6 +122,6 @@ public class RepositoryTests {
         repo = new Repository<>(clz);
         repo.insertOne(o);
 
-        Assertions.assertEquals(1, repo.singleAndMultipleItemDeletionByProperty("id", "1"));
+        Assertions.assertEquals(1, repo.singleAndMultipleItemDeletionByProperty("id", 1));
     }
 }
