@@ -3,14 +3,11 @@ import com.google.gson.Gson;
 import org.apache.commons.lang3.ClassUtils;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class QueryFactory {
-    static String createTableMySQLStatement(Class<?> clz) {
+    public static String createTableMySQLStatement(Class<?> clz) {
         StringBuilder queryString = new StringBuilder("CREATE TABLE " + clz.getSimpleName().toLowerCase() + "(");
         Field[] declaredFields = clz.getDeclaredFields();
         for (Field field : declaredFields) {
@@ -18,80 +15,9 @@ public class QueryFactory {
         }
 
         queryString.delete(queryString.length() - 2, queryString.length());
-        queryString.append(primaryKeyString(declaredFields));
+        queryString.append(createPrimaryKeyString(declaredFields));
         queryString.append(");");
         return queryString.toString();
-    }
-
-    private static String createColumnMySqlDeclaration(Field field) {
-        mySqlColumn mySqlAnnotation = field.getAnnotation(mySqlColumn.class);
-        String type;
-        String name;
-        String extras = "";
-        if (mySqlAnnotation != null) {
-            if (mySqlAnnotation.type() != mySqlColumn.MySqlType.DEFAULT) {
-                type = mySqlAnnotation.type().toString();
-                if (mySqlAnnotation.length() != 0) {
-                    type += "(" + mySqlAnnotation.length() + ")";
-                }
-            } else {
-                type = mySqlType(field.getType());
-            }
-
-            if (!Objects.equals(mySqlAnnotation.columnName(), "")) {
-                name = mySqlAnnotation.columnName();
-            } else {
-                name = field.getName();
-            }
-
-            if (mySqlAnnotation.notNull()) {
-                extras += " NOT NULL";
-            }
-            if (mySqlAnnotation.unique()) {
-                extras += " UNIQUE";
-            }
-            if (mySqlAnnotation.autoIncrement()) {
-                extras += " AUTO_INCREMENT";
-            }
-        } else {
-            type = mySqlType(field.getType());
-            name = field.getName();
-        }
-        return name + " " + type + extras;
-    }
-
-    private static String primaryKeyString(Field[] fields) {
-        List<Field> listFields = List.of(fields);
-        List<Field> primaryKeys = listFields.stream().filter(field -> field.isAnnotationPresent(mySqlColumn.class)).filter(field -> field.getAnnotation(mySqlColumn.class).primaryKey()).collect(Collectors.toList());
-        if (primaryKeys.isEmpty()) {
-            return "";
-        }
-
-        StringBuilder primaryKeyConstraint = new StringBuilder(", CONSTRAINT PK_test PRIMARY KEY (");
-        for (Field field : primaryKeys) {
-            if (field.getAnnotation(mySqlColumn.class).columnName().equals("")) {
-                primaryKeyConstraint.append(field.getName());
-            } else {
-                primaryKeyConstraint.append(field.getAnnotation(mySqlColumn.class).columnName());
-            }
-            primaryKeyConstraint.append(", ");
-        }
-        primaryKeyConstraint.delete(primaryKeyConstraint.length() - 2, primaryKeyConstraint.length());
-        primaryKeyConstraint.append(")");
-        return primaryKeyConstraint.toString();
-    }
-
-    private static String mySqlType(Class<?> clz) {
-        switch (clz.getSimpleName()) {
-            case "int":
-                return "INTEGER";
-            case "String":
-                return "VARCHAR(45)";
-            case "boolean":
-                return "BOOLEAN";
-            default:
-                return "VARCHAR(255)";
-        }
     }
 
     public static <T> String createFindOneQuery(Class<?> clz, int id) {
@@ -109,7 +35,7 @@ public class QueryFactory {
 
         StringBuilder queryString = new StringBuilder(String.format("INSERT INTO %s ", tableName));
         String columnsString = columnsFormattedString(instance.getClass());
-        StringBuilder valuesString = new StringBuilder("VALUES ").append(valuesFormattedString(instance));
+        String valuesString = "VALUES " + valuesFormattedString(instance);
 
         return queryString.append(columnsString).append(valuesString).toString();
     }
@@ -190,5 +116,95 @@ public class QueryFactory {
         valuesString.append(")");
 
         return valuesString.toString();
+    }
+
+    private static String createPrimaryKeyString(Field[] fields) {
+        List<Field> listFields = List.of(fields);
+        List<Field> primaryKeys = listFields.stream().filter(field -> field.isAnnotationPresent(mySqlColumn.class))
+                .filter(field -> field.getAnnotation(mySqlColumn.class).primaryKey()).collect(Collectors.toList());
+        if (primaryKeys.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder primaryKeyConstraint = new StringBuilder(", CONSTRAINT PK_test PRIMARY KEY (");
+        for (Field field : primaryKeys) {
+            primaryKeyConstraint.append(assignColName(field)).append(", ");
+        }
+
+        primaryKeyConstraint.delete(primaryKeyConstraint.length() - 2, primaryKeyConstraint.length());
+        primaryKeyConstraint.append(")");
+        return primaryKeyConstraint.toString();
+    }
+
+    private static String createColumnMySqlDeclaration(Field field) {
+        String type = getFieldSQLType(field);
+        String name = assignColName(field);
+        String extras = createExtrasString(field);
+        return name + " " + type + extras;
+    }
+
+    private static String getFieldSQLType(Field field) {
+        mySqlColumn mySqlAnnotation = field.getAnnotation(mySqlColumn.class);
+        if (mySqlAnnotation == null || mySqlAnnotation.type() == mySqlColumn.MySqlType.DEFAULT) {
+            return mySqlType(field.getType());
+        }
+
+        String type = mySqlAnnotation.type().toString();
+        if (mySqlAnnotation.length() != 0) {
+            type += "(" + mySqlAnnotation.length() + ")";
+        }
+        return type;
+    }
+
+    private static String createExtrasString(Field field) {
+        mySqlColumn mySqlAnnotation = field.getAnnotation(mySqlColumn.class);
+        if (mySqlAnnotation == null){
+            return "";
+        }
+
+        String extras = "";
+        if (mySqlAnnotation.notNull()) {
+            extras += " NOT NULL";
+        }
+        if (mySqlAnnotation.unique()) {
+            extras += " UNIQUE";
+        }
+        if (mySqlAnnotation.autoIncrement()) {
+            extras += " AUTO_INCREMENT";
+        }
+        return extras;
+    }
+
+    private static String mySqlType(Class<?> clz) {
+        switch (clz.getSimpleName()) {
+            case "int":
+            case "Integer":
+                return "INTEGER";
+            case "boolean":
+            case "Boolean":
+                return "BOOLEAN";
+            case "byte":
+            case "Byte":
+                return "TINYINT";
+            case "short":
+            case "Short":
+                return "SMALLINT";
+            case "long":
+            case "Long":
+                return "BIGINT";
+            case "float":
+            case "Float":
+                return "FLOAT";
+            case "double":
+            case "Double":
+                return "DOUBLE";
+            case "char":
+            case "Character":
+                return "CHAR";
+            case "String":
+                return "VARCHAR(45)";
+            default:
+                return "TEXT";
+        }
     }
 }
