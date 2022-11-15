@@ -47,12 +47,21 @@ public class RepositoryTests {
     }
 
     @ParameterizedTest
-    @MethodSource("classesToCheckWithObjectsOfID1")
-    <T> void getByProperty_defaultObject_ReturnsObject(Class<T> clz, T o) {
+    @MethodSource("classesWithIntIdNamedIdWithId1")
+    <T> void getByProperty_defaultObjectWithIntId_ReturnsObject(Class<T> clz, T o) {
         repo = new Repository<>(clz);
         repo.insertOne(o);
 
-        Assertions.assertTrue(repo.getByProperty("id", "1").contains(o),"Get By Property doesn't return correct variables");
+        Assertions.assertTrue(repo.getByProperty("id", 1).contains(o),"Get By Property doesn't return correct variables");
+    }
+
+    @ParameterizedTest
+    @MethodSource("classesWithStringIdNamesThisIdWithId1")
+    <T> void getByProperty_defaultObjectWithStringId_ReturnsObject(Class<T> clz, T o) {
+        repo = new Repository<>(clz);
+        repo.insertOne(o);
+
+        Assertions.assertTrue(repo.getByProperty("thisId", "1").contains(o),"Get By Property doesn't return correct variables");
     }
 
     @ParameterizedTest
