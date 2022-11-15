@@ -27,8 +27,8 @@ class Repository<T> {
     }
 
 
-    public List<T> getByProperty(String propName, String propVal) {
-        if(propName == null || propVal == null) throw new IllegalArgumentException();
+    public List<T> getByProperty(String propName, Object propVal) {
+        if(propName==null || propVal==null) throw new IllegalArgumentException();
         String query = QueryFactory.createGetByPropertyQuery(clz, propName, propVal);
         List<T> results = null;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {

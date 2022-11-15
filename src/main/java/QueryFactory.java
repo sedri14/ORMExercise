@@ -67,16 +67,16 @@ public class QueryFactory {
         Field[] fields = clz.getDeclaredFields();
         for (Field field:
                 fields) {
-            query.append(getFieldName(field));
-            query.append(" = ");
+            query.append(field.getName());
+            query.append("=");
             try {
                 query.append(QueryFactory.handleValue(field.get(object)));
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(String.format("Field %s is inaccessible", field.getName()));
-            }            query.append(" , ");
+            }            query.append(",");
         }
-        query.delete(query.length()-3, query.length()-1);
-        query.append(String.format("WHERE id = %d;",id));
+        query.delete(query.length()-1, query.length());
+        query.append(String.format(" WHERE id=%d;",id));
         return String.valueOf(query);
     }
     public static <T> String createInsertOneQuery(T instance) {
@@ -86,7 +86,7 @@ public class QueryFactory {
 
         StringBuilder queryString = new StringBuilder(String.format("INSERT INTO %s ", tableName));
         String columnsString = columnsFormattedString(instance.getClass());
-        String valuesString = "VALUES " + valuesFormattedString(instance);
+        String valuesString = " VALUES " + valuesFormattedString(instance);
 
         return String.valueOf(queryString.append(columnsString).append(valuesString));
     }
@@ -96,7 +96,7 @@ public class QueryFactory {
         String tableName = clz.getSimpleName().toLowerCase();
         StringBuilder queryString = new StringBuilder(String.format("INSERT INTO %s ", tableName));
         String columnsString = columnsFormattedString(clz);
-        StringBuilder listValuesString = new StringBuilder("VALUES ");
+        StringBuilder listValuesString = new StringBuilder(" VALUES ");
 
         for (T item : itemList) {
             listValuesString.append(valuesFormattedString(item));
@@ -250,7 +250,8 @@ public class QueryFactory {
         }
     }
 
-    public static <T> String createGetByPropertyQuery(Class<T> clz, String propName, String propVal) {
-        return String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(), propName.toLowerCase(), propVal.toLowerCase());
+    public static <T> String createGetByPropertyQuery(Class<T> clz, String propName, Object propVal) {
+        propVal = handleValue(propVal);
+        return String.format("SELECT * FROM %s WHERE %s = %s", clz.getSimpleName().toLowerCase(), propName.toLowerCase(), propVal);
     }
 }
