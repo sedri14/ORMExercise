@@ -137,23 +137,10 @@ public class QueryFactory {
     }
 
     private static String createColumnMySqlDeclaration(Field field) {
-        String type = getFieldSQLType(field);
+        String type = mySqlType(field.getType());
         String name = assignColName(field);
         String extras = createExtrasString(field);
         return name + " " + type + extras;
-    }
-
-    private static String getFieldSQLType(Field field) {
-        mySqlColumn mySqlAnnotation = field.getAnnotation(mySqlColumn.class);
-        if (mySqlAnnotation == null || mySqlAnnotation.type() == mySqlColumn.MySqlType.DEFAULT) {
-            return mySqlType(field.getType());
-        }
-
-        String type = mySqlAnnotation.type().toString();
-        if (mySqlAnnotation.length() != 0) {
-            type += "(" + mySqlAnnotation.length() + ")";
-        }
-        return type;
     }
 
     private static String createExtrasString(Field field) {
