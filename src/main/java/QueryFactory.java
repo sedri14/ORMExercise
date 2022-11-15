@@ -214,4 +214,7 @@ public class QueryFactory {
         query.append(String.format("WHERE id = %d;",id));
         return String.valueOf(query);
     }
+    public static <T> String createGetByPropertyQuery(Class<T> clz, String propName, String propVal) {
+        return String.format("SELECT * FROM %s WHERE %s = '%s'", clz.getSimpleName().toLowerCase(), propName.toLowerCase(), propVal.toLowerCase());
+    }
 }
