@@ -27,45 +27,24 @@ public class QueryFactory {
     public static String createFindAllQuery(Class<?> clz) {
         return String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase());
     }
-    public static String createUpdateSinglePropertyQuery(Class<?> clz, String property, Object newValue,int id){
 
-        Field[] fields = clz.getDeclaredFields();
-        for (Field field:
-                fields) {
-            if(field.getName().equals(property)){
-                Class<?> fieldType = field.getType();
-                if(newValue.getClass().equals(fieldType) || ClassUtils.isAssignable(newValue.getClass(), fieldType)){
-                    newValue = handleValue(newValue);
-                    return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),property,newValue, id);
-                } else{
-                    throw new IllegalArgumentException("The value and the required field type are different");
-                }
-            }
+    public static String createUpdateSinglePropertyQuery(Class<?> clz, String property, Object value, int id) {
+        String stringValue = checkValueOfCorrectType(clz, property, value);
 
-        }
-        throw  new IllegalArgumentException("There is no field with name "+ property);
+        return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(), property, stringValue, id);
     }
-    public static String createDeleteQuery(Class<?> clz,String property,Object value){
-        Field[] fields = clz.getDeclaredFields();
-        for (Field field:
-                fields) {
-            if(field.getName().equals(property)){
-                Class<?> fieldType = field.getType();
-                if(value.getClass().equals(fieldType) || ClassUtils.isAssignable(value.getClass(), fieldType)){
-                    value = handleValue(value);
-                    return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value);
-                } else{
-                    throw new IllegalArgumentException("The value and the required field's type are different");
-                }
-            }
 
-        }
-        throw  new IllegalArgumentException("There is no field with name "+ property);
+
+    public static String createDeleteQuery(Class<?> clz, String property, Object value) {
+        String stringValue = checkValueOfCorrectType(clz, property, value);
+
+        return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(), property, stringValue);
     }
-    public static <T> String createUpdateRowQuery(Class<?> clz,T object,int id) {
-        StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
+
+    public static <T> String createUpdateRowQuery(Class<?> clz, T object, int id) {
+        StringBuilder query = new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
         Field[] fields = clz.getDeclaredFields();
-        for (Field field:
+        for (Field field :
                 fields) {
             query.append(field.getName());
             query.append("=");
@@ -73,12 +52,14 @@ public class QueryFactory {
                 query.append(QueryFactory.handleValue(field.get(object)));
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(String.format("Field %s is inaccessible", field.getName()));
-            }            query.append(",");
+            }
+            query.append(",");
         }
-        query.delete(query.length()-1, query.length());
-        query.append(String.format(" WHERE id=%d;",id));
+        query.delete(query.length() - 1, query.length());
+        query.append(String.format(" WHERE id=%d;", id));
         return String.valueOf(query);
     }
+
     public static <T> String createInsertOneQuery(T instance) {
 
         Class<?> clz = instance.getClass();
@@ -200,7 +181,7 @@ public class QueryFactory {
 
     private static String createExtrasString(Field field) {
         mySqlColumn mySqlAnnotation = field.getAnnotation(mySqlColumn.class);
-        if (mySqlAnnotation == null){
+        if (mySqlAnnotation == null) {
             return "";
         }
 
@@ -250,8 +231,23 @@ public class QueryFactory {
         }
     }
 
-    public static <T> String createGetByPropertyQuery(Class<T> clz, String propName, Object propVal) {
-        propVal = handleValue(propVal);
-        return String.format("SELECT * FROM %s WHERE %s = %s", clz.getSimpleName().toLowerCase(), propName.toLowerCase(), propVal);
+    public static <T> String createGetByPropertyQuery(Class<T> clz, String property, Object value) {
+        String stringValue = checkValueOfCorrectType(clz, property, value);
+
+        return String.format("SELECT * FROM %s WHERE %s = %s", clz.getSimpleName().toLowerCase(), property.toLowerCase(), stringValue);
+    }
+
+    private static <T> String checkValueOfCorrectType(Class<T> clz, String property, Object value) {
+        Field declaredField = null;
+        try {
+            declaredField = clz.getDeclaredField(property);
+        } catch (NoSuchFieldException e) {
+            throw new IllegalArgumentException(String.format("Field %s does not exist", property));
+        }
+        if (!declaredField.getType().equals(value.getClass()) && !ClassUtils.isAssignable(value.getClass(), declaredField.getType())) {
+            throw new IllegalArgumentException("The value is not of the same type of property");
+        }
+
+        return handleValue(value);
     }
 }
