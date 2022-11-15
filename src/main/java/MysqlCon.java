@@ -76,7 +76,7 @@ class MysqlCon<T> {
         return null;
     }
 
-    public <T> void insertOne(T instance) {
+    public <T> int insertOne(T instance) {
         String query = QueryFactory.createInsertOneQuery(instance);
         int rowsAffected = 0;
         try {
@@ -85,10 +85,12 @@ class MysqlCon<T> {
         } catch (Exception e) {
             System.out.println(e);
         }
+
         System.out.println("Rows affected:" + rowsAffected);
+        return rowsAffected;
     }
 
-    public <T> void insertMultiple(List<T> itemList) {
+    public <T> int insertMultiple(List<T> itemList) {
 
         String query = QueryFactory.createInsertMultipleQuery(itemList, clz);
         int rowsAffected = 0;
@@ -98,7 +100,7 @@ class MysqlCon<T> {
             System.out.println(e);
         }
         System.out.println("Rows affected:" + rowsAffected);
-
+        return rowsAffected;
     }
 
     private List<T> listResults(ResultSet rs) throws SQLException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
@@ -145,33 +147,40 @@ class MysqlCon<T> {
         }
     }
 
-    public void updateSingleProperty(int id, String item, String newValue) {
+    public int updateSingleProperty(int id, String item, String newValue) {
         String query = QueryFactory.createUpdateSinglePropertyQuery(clz, item, newValue, id);
+        int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection()) {
-            con.createStatement().executeUpdate(query);
+            rowsAffected = con.createStatement().executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
         }
+        return rowsAffected;
     }
 
-    public void updateRow(int id, T object) {
+    public int updateRow(int id, T object) {
+        int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection()) {
             String query = QueryFactory.createUpdateRowQuery(clz, object, id);
             Statement stmt = con.createStatement();
-            stmt.executeUpdate(String.valueOf(query));
+            rowsAffected = stmt.executeUpdate(String.valueOf(query));
 
         } catch (Exception e) {
             System.out.println(e);
         }
+        return rowsAffected;
     }
 
-    public void singleItemDeletionByProperty(String property, String value) {
+    public int singleItemDeletionByProperty(String property, String value) {
         String query = QueryFactory.createDeleteQuery(clz, property, value);
+        int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
-            stmt.executeUpdate(query);
+            rowsAffected = stmt.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
         }
+
+        return rowsAffected;
     }
 }
