@@ -36,7 +36,7 @@ public class QueryFactory {
                 Class<?> fieldType = field.getType();
                 if(newValue.getClass().equals(fieldType) || ClassUtils.isAssignable(newValue.getClass(), fieldType)){
                     newValue = handleValue(newValue);
-                    return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),property,newValue, id);
+                    return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),getFieldName(field),newValue, id);
                 } else{
                     throw new IllegalArgumentException("The value and the required field type are different");
                 }
@@ -53,7 +53,7 @@ public class QueryFactory {
                 Class<?> fieldType = field.getType();
                 if(value.getClass().equals(fieldType) || ClassUtils.isAssignable(value.getClass(), fieldType)){
                     value = handleValue(value);
-                    return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value);
+                    return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),getFieldName(field), value);
                 } else{
                     throw new IllegalArgumentException("The value and the required field's type are different");
                 }
@@ -67,7 +67,7 @@ public class QueryFactory {
         Field[] fields = clz.getDeclaredFields();
         for (Field field:
                 fields) {
-            query.append(field.getName());
+            query.append(getFieldName(field));
             query.append("=");
             try {
                 query.append(QueryFactory.handleValue(field.get(object)));
