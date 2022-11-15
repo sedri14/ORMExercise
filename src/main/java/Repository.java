@@ -1,3 +1,4 @@
+import Annotations.mySqlColumn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -23,10 +24,29 @@ class Repository<T> {
         try (Connection con = ConnectionPool.getConnection()) {
             DatabaseMetaData meta = con.getMetaData();
             if (!meta.getTables(null, null, clz.getSimpleName().toLowerCase(), new String[]{"TABLE"}).next()) {
+                checkClassForCompatibility(clz);
                 initTable();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void checkClassForCompatibility(Class<?> clz) {
+        Field[] declaredFields = clz.getDeclaredFields();
+        boolean isAutoIncrementPresent = false;
+        for (Field field : declaredFields) {
+            if (field.isAnnotationPresent(mySqlColumn.class)) {
+                mySqlColumn annotation = field.getAnnotation(mySqlColumn.class);
+                if (annotation.autoIncrement()) {
+                    if (!annotation.primaryKey()) {
+                        throw new IllegalArgumentException("Class fields cant have Auto_Increment without Primary_Key");
+                    } else if (isAutoIncrementPresent) {
+                        throw new IllegalArgumentException("Class cant have two Auto_Increment fields");
+                    }
+                    isAutoIncrementPresent = true;
+                }
+            }
         }
     }
 
