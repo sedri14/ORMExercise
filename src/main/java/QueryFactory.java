@@ -195,6 +195,7 @@ public class QueryFactory {
         }
     }
     public static String createUpdateSinglePropertyQuery(Class<?> clz,String item,String newValue,int id){
+        newValue = handleValue(newValue);
         return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id);
     }
     public static String createDeleteQuery(Class<?> clz,String property,String value){

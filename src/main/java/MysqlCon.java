@@ -34,7 +34,7 @@ class MysqlCon<T> {
 
 
     public List<T> getByProperty(String propName, String propVal) {
-
+        if(propName==null || propVal==null) throw new IllegalArgumentException();
         String query = QueryFactory.createGetByPropertyQuery(clz, propName,propVal);
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
@@ -92,6 +92,7 @@ class MysqlCon<T> {
     }
 
     public <T> void insertOne(T instance) {
+        if(instance==null) throw new IllegalArgumentException("cannot insert a null instance to database!");
         String query = QueryFactory.createInsertOneQuery(instance);
         int rowsAffected = 0;
         try {
@@ -105,6 +106,7 @@ class MysqlCon<T> {
     }
 
     public <T> void insertMultiple(List<T> itemList) {
+        if(itemList==null) throw new IllegalArgumentException("cannot insert a null instances to database!");
 
         String query = QueryFactory.createInsertMultipleQuery(itemList, clz);
         int rowsAffected = 0;
@@ -153,25 +155,26 @@ class MysqlCon<T> {
     }
 
     public void updateSingleProperty(int id,String item,String newValue) {
+        String query = QueryFactory.createUpdateSinglePropertyQuery(clz,item,newValue,id);
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
-            String query = QueryFactory.createUpdateSinglePropertyQuery(clz,item,newValue,id);
             stmt.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
         }
+        System.out.println("1 property has been updated successfully");
     }
     public void updateRow(int id,T object) {
         try (Connection con = ConnectionPool.getConnection()){
             Statement stmt = con.createStatement();
             String query = QueryFactory.createUpdateRowQuery(clz,object,id);
             stmt.executeUpdate(String.valueOf(query));
-
         } catch (Exception e) {
             System.out.println(e);
         }
+        System.out.println("The row updated successfully");
     }
-    public void singleItemDeletionByProperty(String property,String value) {
+    public void singleAndMultipleItemDeletionByProperty(String property,String value) {
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             String query = QueryFactory.createDeleteQuery(clz,property,value);
