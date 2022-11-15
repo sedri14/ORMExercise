@@ -200,14 +200,18 @@ public class QueryFactory {
     public static String createDeleteQuery(Class<?> clz,String property,String value){
         return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value);
     }
-    public static <T> String createUpdateRowQuery(Class<?> clz,T object,int id) throws IllegalAccessException {
+    public static <T> String createUpdateRowQuery(Class<?> clz,T object,int id) {
         StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
         Field[] fields = clz.getDeclaredFields();
         for (Field field:
                 fields) {
             query.append(field.getName());
             query.append(" = ");
-            query.append(QueryFactory.handleValue(field.get(object)));
+            try {
+                query.append(QueryFactory.handleValue(field.get(object)));
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(String.format("Field %s is inaccessible", field.getName()));
+            }
             query.append(" , ");
         }
         query.delete(query.length()-3, query.length()-1);

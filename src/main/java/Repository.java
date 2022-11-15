@@ -29,52 +29,50 @@ class Repository<T> {
 
     public List<T> getByProperty(String propName, String propVal) {
         String query = QueryFactory.createGetByPropertyQuery(clz, propName, propVal);
+        List<T> results = null;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             ResultSet rs = stmt.executeQuery(query);
-
-            return listResults(rs);
-
+            results = listResults(rs);
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         } catch (Exception e) {
             System.out.println(e);
         }
-        return null;
+
+        return results;
     }
 
     public T findOne(int id) {
         String query = QueryFactory.createFindOneQuery(clz, id);
+        T result = null;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             ResultSet rs = stmt.executeQuery(query);
-
-            return (rs.next() ? createSingleInstance(rs) : null);
-
-        } catch (Exception e) {
-            System.out.println(e);
+            result = (rs.next() ? createSingleInstance(rs) : null);
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
-        return null;
+        return result;
     }
 
     public List<T> findAll() {
         String query = QueryFactory.createFindAllQuery(clz);
+        List<T> results = null;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             ResultSet rs = stmt.executeQuery(query);
-
-            return listResults(rs);
-
-        } catch (Exception e) {
-            System.out.println(e);
+            results = listResults(rs);
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
-        return null;
+        return results;
     }
 
     public <T> int insertOne(T instance) {
         String query = QueryFactory.createInsertOneQuery(instance);
         int rowsAffected = 0;
-        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();){
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
-        } catch (Exception e) {
-            System.out.println(e);
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
 
         System.out.println("Rows affected:" + rowsAffected);
@@ -86,14 +84,14 @@ class Repository<T> {
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
-        } catch (Exception e) {
-            System.out.println(e);
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
         System.out.println("Rows affected:" + rowsAffected);
         return rowsAffected;
     }
 
-    private List<T> listResults(ResultSet rs) throws SQLException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    private List<T> listResults(ResultSet rs) throws SQLException {
         List<T> results = new ArrayList<>();
         while (rs.next()) {
             results.add(createSingleInstance(rs));
@@ -102,20 +100,33 @@ class Repository<T> {
         return results;
     }
 
-    private T createSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
-        Constructor<T> constructor = clz.getConstructor(null);
-        T clzInstance = constructor.newInstance();
-        fieldsAssignment(clzInstance, rs);
+    private T createSingleInstance(ResultSet rs) {
+
+        T clzInstance;
+        try {
+            Constructor<T> constructor = clz.getConstructor(null);
+            clzInstance = constructor.newInstance();
+            fieldsAssignment(clzInstance, rs);
+
+        } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
+            throw new UnsupportedOperationException("Could not instantiate result class");
+        }
 
         return clzInstance;
     }
 
-    public void fieldsAssignment(T clzInstance, ResultSet rs) throws SQLException, IllegalAccessException {
+    public void fieldsAssignment(T clzInstance, ResultSet rs) {
         Field[] declaredFields = clz.getDeclaredFields();
         for (Field field : declaredFields) {
             String colName = QueryFactory.getFieldName(field);
             field.setAccessible(true);
-            field.set(clzInstance, rs.getObject(colName));
+            try {
+                field.set(clzInstance, rs.getObject(colName));
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(String.format("Field %s is inaccessible", field.getName()));
+            } catch(SQLException e) {
+                throw new IllegalArgumentException("Column label is not valid");
+            }
         }
     }
 
@@ -141,19 +152,19 @@ class Repository<T> {
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
-        } catch (Exception e) {
-            System.out.println(e);
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
         return rowsAffected;
     }
 
     public int updateRow(int id, T object) {
+        String query = QueryFactory.createUpdateRowQuery(clz, object, id);
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
-            String query = QueryFactory.createUpdateRowQuery(clz, object, id);
             rowsAffected = stmt.executeUpdate(String.valueOf(query));
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.out.println(e);
         }
         return rowsAffected;
