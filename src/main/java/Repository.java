@@ -27,7 +27,7 @@ class Repository<T> {
     }
 
 
-    public List<T> getByProperty(String propName, String propVal) {
+    public List<T> getByProperty(String propName, Object propVal) {
         if(propName==null || propVal==null) throw new IllegalArgumentException();
         String query = QueryFactory.createGetByPropertyQuery(clz, propName, propVal);
         try (Connection con = ConnectionPool.getConnection()) {
@@ -143,8 +143,7 @@ class Repository<T> {
 
         String query = QueryFactory.createUpdateSinglePropertyQuery(clz,item,newValue,id);
         int rowEffect = 0;
-        try (Connection con = ConnectionPool.getConnection()) {
-            Statement stmt = con.createStatement();
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             stmt.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
@@ -167,8 +166,7 @@ class Repository<T> {
     public int singleAndMultipleItemDeletionByProperty(String property,Object value) {
         String query = QueryFactory.createDeleteQuery(clz,property,value);
         int rowsAffected = 0;
-        try (Connection con = ConnectionPool.getConnection()) {
-            Statement stmt = con.createStatement();
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
