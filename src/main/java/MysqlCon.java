@@ -35,16 +35,12 @@ class MysqlCon<T> {
 
     public List<T> getByProperty(String propName, String propVal) {
 
-        String query = QueryFactory.createGetByPropertyQuery(clz, propName,propVal);
+        String query = QueryFactory.createGetByPropertyQuery(clz, propName, propVal);
         try (Connection con = ConnectionPool.getConnection()) {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(query);
-            List<T> results = new ArrayList<>();
-            while (rs.next()) {
-                results.add(createSingleInstance(rs));
-            }
+            ResultSet rs = con.createStatement().executeQuery(query);
 
-            return results;
+            return listResults(rs);
+
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         } catch (Exception e) {
@@ -56,17 +52,10 @@ class MysqlCon<T> {
     public T findOne(int id) {
         String query = QueryFactory.createFindOneQuery(clz, id);
         try (Connection con = ConnectionPool.getConnection()) {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(query);
+            ResultSet rs = con.createStatement().executeQuery(query);
 
-            T clzInstance;
-            if (rs.next()) {
-                clzInstance = createSingleInstance(rs);
-            } else {
-                return null;
-            }
+            return (rs.next() ? createSingleInstance(rs) : null);
 
-            return clzInstance;
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -76,15 +65,10 @@ class MysqlCon<T> {
     public List<T> findAll() {
         String query = QueryFactory.createFindAllQuery(clz);
         try (Connection con = ConnectionPool.getConnection()) {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(query);
+            ResultSet rs = con.createStatement().executeQuery(query);
 
-            List<T> results = new ArrayList<>();
-            while (rs.next()) {
-                results.add(createSingleInstance(rs));
-            }
+            return listResults(rs);
 
-            return results;
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -96,8 +80,7 @@ class MysqlCon<T> {
         int rowsAffected = 0;
         try {
             Connection con = ConnectionPool.getConnection();
-            Statement stmt = con.createStatement();
-            rowsAffected = stmt.executeUpdate(query);
+            rowsAffected = con.createStatement().executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -109,8 +92,7 @@ class MysqlCon<T> {
         String query = QueryFactory.createInsertMultipleQuery(itemList, clz);
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection()) {
-            Statement stmt = con.createStatement();
-            rowsAffected = stmt.executeUpdate(query);
+            rowsAffected = con.createStatement().executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -118,7 +100,16 @@ class MysqlCon<T> {
 
     }
 
-    public T createSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
+    private List<T> listResults(ResultSet rs) throws SQLException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        List<T> results = new ArrayList<>();
+        while (rs.next()) {
+            results.add(createSingleInstance(rs));
+        }
+
+        return results;
+    }
+
+    private T createSingleInstance(ResultSet rs) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, SQLException {
         Constructor<T> constructor = clz.getConstructor(null);
         T clzInstance = constructor.newInstance();
         fieldsAssignment(clzInstance, rs);
@@ -145,36 +136,37 @@ class MysqlCon<T> {
     public boolean truncateTable() {
         String queryString = "TRUNCATE TABLE " + clz.getSimpleName().toLowerCase() + ";";
         try (Connection con = ConnectionPool.getConnection();
-             Statement statement = con.createStatement()){
+             Statement statement = con.createStatement()) {
             return statement.execute(queryString);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void updateSingleProperty(int id,String item,String newValue) {
+    public void updateSingleProperty(int id, String item, String newValue) {
+        String query = QueryFactory.createUpdateSinglePropertyQuery(clz, item, newValue, id);
         try (Connection con = ConnectionPool.getConnection()) {
-            Statement stmt = con.createStatement();
-            String query = QueryFactory.createUpdateSinglePropertyQuery(clz,item,newValue,id);
-            stmt.executeUpdate(query);
+            con.createStatement().executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
         }
     }
-    public void updateRow(int id,T object) {
-        try (Connection con = ConnectionPool.getConnection()){
+
+    public void updateRow(int id, T object) {
+        try (Connection con = ConnectionPool.getConnection()) {
+            String query = QueryFactory.createUpdateRowQuery(clz, object, id);
             Statement stmt = con.createStatement();
-            String query = QueryFactory.createUpdateRowQuery(clz,object,id);
             stmt.executeUpdate(String.valueOf(query));
 
         } catch (Exception e) {
             System.out.println(e);
         }
     }
-    public void singleItemDeletionByProperty(String property,String value) {
+
+    public void singleItemDeletionByProperty(String property, String value) {
+        String query = QueryFactory.createDeleteQuery(clz, property, value);
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
-            String query = QueryFactory.createDeleteQuery(clz,property,value);
             stmt.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e);
