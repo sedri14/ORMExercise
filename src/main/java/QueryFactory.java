@@ -27,23 +27,23 @@ public class QueryFactory {
     public static String createFindAllQuery(Class<?> clz) {
         return String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase());
     }
-    public static String createUpdateSinglePropertyQuery(Class<?> clz,String item,Object newValue,int id){
+    public static String createUpdateSinglePropertyQuery(Class<?> clz, String property, Object newValue,int id){
 
         Field[] fields = clz.getDeclaredFields();
         for (Field field:
                 fields) {
-            if(field.getName().equals(item)){
+            if(field.getName().equals(property)){
                 Class<?> fieldType = field.getType();
                 if(newValue.getClass().equals(fieldType)){
                     newValue = handleValue(newValue);
-                    return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id);
+                    return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),property,newValue, id);
                 } else{
                     throw new IllegalArgumentException("The value and the required field type are different");
                 }
             }
 
         }
-        throw  new IllegalArgumentException("There is no field with name "+ item);
+        throw  new IllegalArgumentException("There is no field with name "+ property);
     }
     public static String createDeleteQuery(Class<?> clz,String property,Object value){
         Field[] fields = clz.getDeclaredFields();
