@@ -12,21 +12,7 @@ public class RepositoryTests {
 
     private Repository<?> repo;
 
-    private static Stream<Arguments> classesToCheck() {
-        return Stream.of(
-                Arguments.of(MyInt.class, new MyInt()),
-                Arguments.of(WithObject.class, new WithObject()),
-                Arguments.of(WithAnnotations.class, new WithAnnotations())
-        );
-    }
 
-    private static Stream<Arguments> classesToCheckWithObjectsOfID1() {
-        return Stream.of(
-                Arguments.of(MyInt.class, new MyInt(1)),
-                Arguments.of(WithObject.class, new WithObject(1)),
-                Arguments.of(WithAnnotations.class, new WithAnnotations(1))
-        );
-    }
 
     @AfterEach
     void cleanUp() {
@@ -61,12 +47,21 @@ public class RepositoryTests {
     }
 
     @ParameterizedTest
-    @MethodSource("classesToCheckWithObjectsOfID1")
-    <T> void getByProperty_defaultObject_ReturnsObject(Class<T> clz, T o) {
+    @MethodSource("classesWithIntIdNamedIdWithId1")
+    <T> void getByProperty_defaultObjectWithIntId_ReturnsObject(Class<T> clz, T o) {
         repo = new Repository<>(clz);
         repo.insertOne(o);
 
-        Assertions.assertTrue(repo.getByProperty("id", "1").contains(o),"Get By Property doesn't return correct variables");
+        Assertions.assertTrue(repo.getByProperty("id", 1).contains(o),"Get By Property doesn't return correct variables");
+    }
+
+    @ParameterizedTest
+    @MethodSource("classesWithStringIdNamesThisIdWithId1")
+    <T> void getByProperty_defaultObjectWithStringId_ReturnsObject(Class<T> clz, T o) {
+        repo = new Repository<>(clz);
+        repo.insertOne(o);
+
+        Assertions.assertTrue(repo.getByProperty("thisId", "1").contains(o),"Get By Property doesn't return correct variables");
     }
 
     @ParameterizedTest
@@ -108,8 +103,8 @@ public class RepositoryTests {
     }
 
     @ParameterizedTest
-    @MethodSource("classesToCheckWithObjectsOfID1")
-    <T> void updateSingleProperty_defaultObject_Returns1(Class<T> clz, T o) {
+    @MethodSource("classesWithIntIdNamedIdWithId1")
+    <T> void updateSingleProperty_defaultObjectWithIntId_Returns1(Class<T> clz, T o) {
         repo = new Repository<>(clz);
         repo.insertOne(o);
 
@@ -117,11 +112,65 @@ public class RepositoryTests {
     }
 
     @ParameterizedTest
-    @MethodSource("classesToCheckWithObjectsOfID1")
-    <T> void itemDeletionByProperty_defaultObject_Returns1(Class<T> clz, T o) {
+    @MethodSource("classesWithIntIdNamedIdWithId1")
+    <T> void itemDeletionByProperty_defaultObjectWithIntId_Returns1(Class<T> clz, T o) {
         repo = new Repository<>(clz);
         repo.insertOne(o);
 
         Assertions.assertEquals(1, repo.singleAndMultipleItemDeletionByProperty("id", 1));
+    }
+
+    @ParameterizedTest
+    @MethodSource("classesWithStringIdNamesThisIdWithId1")
+    <T> void updateSingleProperty_defaultObjectWithStringThisId_Returns1(Class<T> clz, T o) {
+        repo = new Repository<>(clz);
+        repo.insertOne(o);
+
+        Assertions.assertEquals(1, repo.updateSingleProperty(1, "thisId", "2"), "update by property returns unexpected value");
+    }
+
+    @ParameterizedTest
+    @MethodSource("classesWithStringIdNamesThisIdWithId1")
+    <T> void itemDeletionByProperty_defaultObjectWithStringThisId_Returns1(Class<T> clz, T o) {
+        repo = new Repository<>(clz);
+        repo.insertOne(o);
+
+        Assertions.assertEquals(1, repo.singleAndMultipleItemDeletionByProperty("thisId", "1"));
+    }
+
+    private static Stream<Arguments> classesToCheck() {
+        return Stream.concat(classesWithIntIdNamedId(), classesWithStringIdNamesThisId());
+    }
+
+    private static Stream<Arguments> classesWithIntIdNamedId() {
+        return Stream.of(
+                Arguments.of(MyInt.class, new MyInt()),
+                Arguments.of(WithObject.class, new WithObject())
+
+        );
+    }
+
+    private static Stream<Arguments> classesWithStringIdNamesThisId() {
+        return Stream.of(
+                Arguments.of(WithAnnotations.class, new WithAnnotations())
+        );
+    }
+
+    private static Stream<Arguments> classesToCheckWithObjectsOfID1() {
+        return Stream.concat(classesWithIntIdNamedIdWithId1(), classesWithStringIdNamesThisIdWithId1());
+    }
+
+    private static Stream<Arguments> classesWithIntIdNamedIdWithId1() {
+        return Stream.of(
+                Arguments.of(MyInt.class, new MyInt(1)),
+                Arguments.of(WithObject.class, new WithObject(1))
+
+        );
+    }
+
+    private static Stream<Arguments> classesWithStringIdNamesThisIdWithId1() {
+        return Stream.of(
+                Arguments.of(WithAnnotations.class, new WithAnnotations(1))
+        );
     }
 }

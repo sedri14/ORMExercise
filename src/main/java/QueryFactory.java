@@ -29,16 +29,16 @@ public class QueryFactory {
     }
 
     public static String createUpdateSinglePropertyQuery(Class<?> clz, String property, Object value, int id) {
-        String stringValue = checkValueOfCorrectType(clz, property, value);
+        Field field = checkValueOfCorrectType(clz, property, value);
 
-        return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(), property, stringValue, id);
+        return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(), getFieldName(field), handleValue(value), id);
     }
 
 
     public static String createDeleteQuery(Class<?> clz, String property, Object value) {
-        String stringValue = checkValueOfCorrectType(clz, property, value);
+        Field field = checkValueOfCorrectType(clz, property, value);
 
-        return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(), property, stringValue);
+        return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(), getFieldName(field), handleValue(value));
     }
 
     public static <T> String createUpdateRowQuery(Class<?> clz, T object, int id) {
@@ -46,7 +46,7 @@ public class QueryFactory {
         Field[] fields = clz.getDeclaredFields();
         for (Field field :
                 fields) {
-            query.append(field.getName());
+            query.append(getFieldName(field));
             query.append("=");
             try {
                 query.append(QueryFactory.handleValue(field.get(object)));
@@ -232,12 +232,11 @@ public class QueryFactory {
     }
 
     public static <T> String createGetByPropertyQuery(Class<T> clz, String property, Object value) {
-        String stringValue = checkValueOfCorrectType(clz, property, value);
-
-        return String.format("SELECT * FROM %s WHERE %s = %s", clz.getSimpleName().toLowerCase(), property.toLowerCase(), stringValue);
+        Field field = checkValueOfCorrectType(clz, property, value);
+        return String.format("SELECT * FROM %s WHERE %s = %s", clz.getSimpleName().toLowerCase(), getFieldName(field), handleValue(value));
     }
 
-    private static <T> String checkValueOfCorrectType(Class<T> clz, String property, Object value) {
+    private static <T> Field checkValueOfCorrectType(Class<T> clz, String property, Object value) {
         Field declaredField = null;
         try {
             declaredField = clz.getDeclaredField(property);
@@ -248,6 +247,6 @@ public class QueryFactory {
             throw new IllegalArgumentException("The value is not of the same type of property");
         }
 
-        return handleValue(value);
+        return declaredField;
     }
 }
