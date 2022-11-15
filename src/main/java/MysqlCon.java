@@ -59,13 +59,11 @@ class MysqlCon<T> {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(query);
 
-            //TODO: ResultSet reader class
-            Constructor<T> constructor = clz.getConstructor(null);
-            T clzInstance = constructor.newInstance();
+            T clzInstance;
             if (rs.next()) {
-                fieldsAssignment(clzInstance, rs);
+                clzInstance = createSingleInstance(rs);
             } else {
-
+                return null;
             }
 
             return clzInstance;
