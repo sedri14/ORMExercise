@@ -1,22 +1,15 @@
-import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
-import java.util.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import Annotations.mySqlColumn;
-import com.google.gson.Gson;
-import org.apache.commons.lang3.ClassUtils;
-
-class MysqlCon<T> {
+class Repository<T> {
 
     private final Class<T> clz;
 
-    public MysqlCon(Class<T> clz) {
+    public Repository(Class<T> clz) {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
