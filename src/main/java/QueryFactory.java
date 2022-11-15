@@ -20,11 +20,11 @@ public class QueryFactory {
         return queryString.toString();
     }
 
-    public static <T> String createFindOneQuery(Class<?> clz, int id) {
+    public static String createFindOneQuery(Class<?> clz, int id) {
         return String.format("SELECT * FROM %s WHERE id=%d", clz.getSimpleName().toLowerCase(), id);
     }
 
-    public static <T> String createFindAllQuery(Class<T> clz) {
+    public static String createFindAllQuery(Class<?> clz) {
         return String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase());
     }
 
@@ -68,7 +68,7 @@ public class QueryFactory {
         }
     }
 
-    private static <T> String columnsFormattedString(Class<?> clz) {
+    private static String columnsFormattedString(Class<?> clz) {
 
         StringBuilder columnsString = new StringBuilder("(");
 
