@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import Annotations.mySqlColumn;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.ClassUtils;
 
@@ -120,8 +121,9 @@ class MysqlCon<T> {
     public void fieldsAssignment(T clzInstance, ResultSet rs) throws SQLException, IllegalAccessException {
         Field[] declaredFields = clz.getDeclaredFields();
         for (Field field : declaredFields) {
+            String colName = QueryFactory.getFieldName(field);
             field.setAccessible(true);
-            field.set(clzInstance, rs.getObject(field.getName()));
+            field.set(clzInstance, rs.getObject(colName));
         }
     }
 

@@ -75,7 +75,7 @@ public class QueryFactory {
         Field[] declaredFields = clz.getDeclaredFields();
         for (Field field : declaredFields) {
             field.setAccessible(true);
-            String colName = assignColName(field);
+            String colName = getFieldName(field);
             columnsString.append(colName);
             columnsString.append(",");
         }
@@ -85,7 +85,7 @@ public class QueryFactory {
         return columnsString.toString();
     }
 
-    private static String assignColName(Field field) {
+    public static String getFieldName(Field field) {
 
         if (field.isAnnotationPresent(mySqlColumn.class)) {
             if (!field.getAnnotation(mySqlColumn.class).columnName().isEmpty()) {
@@ -128,7 +128,7 @@ public class QueryFactory {
 
         StringBuilder primaryKeyConstraint = new StringBuilder(", CONSTRAINT PK_test PRIMARY KEY (");
         for (Field field : primaryKeys) {
-            primaryKeyConstraint.append(assignColName(field)).append(", ");
+            primaryKeyConstraint.append(getFieldName(field)).append(", ");
         }
 
         primaryKeyConstraint.delete(primaryKeyConstraint.length() - 2, primaryKeyConstraint.length());
@@ -138,7 +138,7 @@ public class QueryFactory {
 
     private static String createColumnMySqlDeclaration(Field field) {
         String type = mySqlType(field.getType());
-        String name = assignColName(field);
+        String name = getFieldName(field);
         String extras = createExtrasString(field);
         return name + " " + type + extras;
     }
