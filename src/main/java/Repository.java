@@ -49,7 +49,8 @@ class Repository<T> {
             ResultSet rs = stmt.executeQuery(query);
             result = (rs.next() ? createSingleInstance(rs) : null);
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
+            throw new RuntimeException("DB error", e);
         }
         return result;
     }
@@ -61,7 +62,8 @@ class Repository<T> {
             ResultSet rs = stmt.executeQuery(query);
             results = listResults(rs);
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
+            throw new RuntimeException("DB error", e);
         }
         return results;
     }
@@ -72,7 +74,7 @@ class Repository<T> {
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException("DB error", e);
         }
 
         System.out.println("Rows affected:" + rowsAffected);
@@ -82,10 +84,11 @@ class Repository<T> {
     public <T> int insertMultiple(List<T> itemList) {
         String query = QueryFactory.createInsertMultipleQuery(itemList, clz);
         int rowsAffected = 0;
-        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
+        try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement()) {
             rowsAffected = stmt.executeUpdate(query);
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
+            throw new RuntimeException("DB error", e);
         }
         System.out.println("Rows affected:" + rowsAffected);
         return rowsAffected;
@@ -134,7 +137,7 @@ class Repository<T> {
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement()) {
             return stmt.execute(QueryFactory.createTableMySQLStatement(clz));
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("DB error", e);
         }
     }
 
@@ -153,7 +156,8 @@ class Repository<T> {
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
+            throw new RuntimeException("DB error", e);
         }
         return rowsAffected;
     }
@@ -165,7 +169,7 @@ class Repository<T> {
             rowsAffected = stmt.executeUpdate(String.valueOf(query));
 
         } catch (SQLException e) {
-            System.out.println(e);
+            throw new RuntimeException("DB error", e);
         }
         return rowsAffected;
     }
@@ -176,7 +180,7 @@ class Repository<T> {
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
         } catch (Exception e) {
-            System.out.println(e);
+            throw new RuntimeException("DB error", e);
         }
 
         return rowsAffected;
