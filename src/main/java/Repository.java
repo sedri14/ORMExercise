@@ -1,3 +1,6 @@
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -8,6 +11,7 @@ import java.util.List;
 class Repository<T> {
 
     private final Class<T> clz;
+    private static Logger logger = LogManager.getLogger(Repository.class.getName());
 
     public Repository(Class<T> clz) {
         try {
@@ -22,20 +26,21 @@ class Repository<T> {
                 initTable();
             }
         } catch (SQLException e) {
+            logger.fatal(String.format("Could not get or instantiate table: ",clz.getSimpleName().toLowerCase()));
             throw new RuntimeException(e);
         }
     }
 
 
-    public List<T> getByProperty(String propName, Object propVal) {
-        if(propName==null || propVal==null) throw new IllegalArgumentException();
-        String query = QueryFactory.createGetByPropertyQuery(clz, propName, propVal);
+    public List<T> getByProperty(String property, Object value) {
+        if(property == null || value == null) throw new IllegalArgumentException();
+        String query = QueryFactory.createGetByPropertyQuery(clz, property, value);
         List<T> results = null;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             ResultSet rs = stmt.executeQuery(query);
             results = listResults(rs);
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logger.error(e.getMessage() + e.getErrorCode());
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -45,54 +50,65 @@ class Repository<T> {
 
     public T findOne(int id) {
         String query = QueryFactory.createFindOneQuery(clz, id);
+        logger.debug(String.format("findOne: Execute query: %s", query));
         T result = null;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             ResultSet rs = stmt.executeQuery(query);
             result = (rs.next() ? createSingleInstance(rs) : null);
         } catch (SQLException e) {
-            //System.out.println(e.getMessage());
+            logger.error(e.getMessage() + e.getErrorCode());
             throw new RuntimeException("DB error", e);
         }
+        logger.info("findOne execute query finished");
+
         return result;
     }
 
     public List<T> findAll() {
         String query = QueryFactory.createFindAllQuery(clz);
+        logger.debug(String.format("findAll: Execute query: %s", query));
         List<T> results = null;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             ResultSet rs = stmt.executeQuery(query);
             results = listResults(rs);
         } catch (SQLException e) {
-            //System.out.println(e.getMessage());
+            logger.error(e.getMessage() + e.getErrorCode());
             throw new RuntimeException("DB error", e);
         }
+        logger.info("findAll execute query finished");
+
+
         return results;
     }
 
     public <T> int insertOne(T instance) {
-        if(instance==null) throw new IllegalArgumentException("cannot insert a null instance to database!");
+        if (instance == null) throw new IllegalArgumentException("Can not insert a null instance to database!");
         String query = QueryFactory.createInsertOneQuery(instance);
+        logger.debug(String.format("insertOne: Execute query: %s", query));
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
         } catch (SQLException e) {
+            logger.error(e.getMessage() + e.getErrorCode());
             throw new RuntimeException("DB error", e);
         }
-        System.out.println("Rows affected:" + rowsAffected);
+        logger.info(String.format("Item inserted. Rows affected: %d", rowsAffected));
 
         return rowsAffected;
     }
 
     public <T> int insertMultiple(List<T> itemList) {
         String query = QueryFactory.createInsertMultipleQuery(itemList, clz);
+        logger.debug(String.format("insertMultiple: Execute query: %s", query));
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement()) {
             rowsAffected = stmt.executeUpdate(query);
         } catch (SQLException e) {
-            //System.out.println(e.getMessage());
+            logger.error(e.getMessage() + e.getErrorCode());
             throw new RuntimeException("DB error", e);
         }
-        System.out.println("Rows affected:" + rowsAffected);
+        logger.info(String.format("Items inserted. Rows affected: %d", rowsAffected));
+
         return rowsAffected;
     }
 
@@ -113,6 +129,7 @@ class Repository<T> {
             fieldsAssignment(clzInstance, rs);
 
         } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
+            logger.error("Throwing exception: Could not instantiate result class");
             throw new UnsupportedOperationException("Could not instantiate result class");
         }
 
@@ -127,65 +144,86 @@ class Repository<T> {
             try {
                 field.set(clzInstance, rs.getObject(colName));
             } catch (IllegalAccessException e) {
+                logger.error(String.format("Throwing exception: Field %s is inaccessible", field.getName()));
                 throw new RuntimeException(String.format("Field %s is inaccessible", field.getName()));
             } catch(SQLException e) {
+                logger.error("Throwing exception: Column label is not valid");
                 throw new IllegalArgumentException("Column label is not valid");
             }
         }
     }
 
     public boolean initTable() {
+        String query = QueryFactory.createTableMySQLStatement(clz);
+        logger.debug(String.format("initTable: Execute query: %s", query));
+        boolean isInit = false;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement()) {
-            return stmt.execute(QueryFactory.createTableMySQLStatement(clz));
+            isInit = stmt.execute(query);
         } catch (SQLException e) {
+            logger.error(e.getMessage() + e.getErrorCode());
             throw new RuntimeException("DB error", e);
         }
+        logger.info("Table initialized");
+
+        return isInit;
     }
 
     public boolean truncateTable() {
-        String queryString = "TRUNCATE TABLE " + clz.getSimpleName().toLowerCase() + ";";
+        String query = "TRUNCATE TABLE " + clz.getSimpleName().toLowerCase() + ";";
+        logger.debug(String.format("truncateTable: Execute query: %s", query));
+        boolean isTruncated = false;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
-            return stmt.execute(queryString);
+            isTruncated = stmt.execute(query);
         } catch (SQLException e) {
+            logger.error(e.getMessage() + e.getErrorCode());
             throw new RuntimeException(e);
         }
+        logger.info("Table truncated");
+
+        return isTruncated;
     }
 
-    public int updateSingleProperty(int id,String item,Object newValue) {
-        String query = QueryFactory.createUpdateSinglePropertyQuery(clz,item,newValue,id);
+    public int updateSingleProperty(int id, String property, Object newValue) {
+        String query = QueryFactory.createUpdateSinglePropertyQuery(clz, property, newValue,id);
+        logger.debug(String.format("updateSingleProperty: Execute query: %s", query));
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection();Statement stmt = con.createStatement()) {
             rowsAffected = stmt.executeUpdate(query);
-        } catch (Exception e) {
-            //System.out.println(e.getMessage());
+        } catch (SQLException e) {
+            logger.error(e.getMessage() + e.getErrorCode());
             throw new RuntimeException("DB error", e);
         }
-        System.out.println("1 property has been updated successfully");
+        logger.info(String.format("Property %s has been updated to %s, Item id: %d", property, String.valueOf(newValue),id));
 
         return rowsAffected;
     }
 
     public int updateRow(int id, T object) {
         String query = QueryFactory.createUpdateRowQuery(clz, object, id);
+        logger.debug(String.format("updateRow: Execute query: %s", query));
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(String.valueOf(query));
 
         } catch (SQLException e) {
+            logger.error(e.getMessage() + e.getErrorCode());
             throw new RuntimeException("DB error", e);
         }
-        System.out.println("The row updated successfully");
+        logger.info(String.format("Row id %d has been updated", id));
 
         return rowsAffected;
     }
-    public int singleAndMultipleItemDeletionByProperty(String property,Object value) {
+    public int singleAndMultipleItemDeletionByProperty(String property, Object value) {
         String query = QueryFactory.createDeleteQuery(clz,property,value);
+        logger.debug(String.format("singleAndMultipleItemDeletionByProperty: Execute query: %s", query));
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);
-        } catch (Exception e) {
+        } catch (SQLException e) {
+            logger.error(e.getMessage() + e.getErrorCode());
             throw new RuntimeException("DB error", e);
         }
+        logger.info(String.format("%d rows have been deleted", rowsAffected));
 
         return rowsAffected;
     }
