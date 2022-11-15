@@ -20,11 +20,11 @@ public class QueryFactory {
         return queryString.toString();
     }
 
-    public static <T> String createFindOneQuery(Class<?> clz, int id) {
+    public static String createFindOneQuery(Class<?> clz, int id) {
         return String.format("SELECT * FROM %s WHERE id=%d", clz.getSimpleName().toLowerCase(), id);
     }
 
-    public static <T> String createFindAllQuery(Class<T> clz) {
+    public static String createFindAllQuery(Class<?> clz) {
         return String.format("SELECT * FROM %s", clz.getSimpleName().toLowerCase());
     }
     public static String createUpdateSinglePropertyQuery(Class<?> clz,String item,Object newValue,int id){
@@ -94,22 +94,22 @@ public class QueryFactory {
     // -----------------------HELPERS-----------------------//
     public static String handleValue(Object val) {
         if (ClassUtils.isPrimitiveOrWrapper(val.getClass())) {
-            return val.toString();
+            return (val instanceof Character) ? String.format("\'%c\'", val) : val.toString();
         } else if (val instanceof String) {
-            return String.format("\"%s\"", val.toString());
+            return String.format("\"%s\"", val);
         } else {
             return String.format("\"%s\"", new Gson().toJson(val));
         }
     }
 
-    private static <T> String columnsFormattedString(Class<?> clz) {
+    private static String columnsFormattedString(Class<?> clz) {
 
         StringBuilder columnsString = new StringBuilder("(");
 
         Field[] declaredFields = clz.getDeclaredFields();
         for (Field field : declaredFields) {
             field.setAccessible(true);
-            String colName = assignColName(field);
+            String colName = getFieldName(field);
             columnsString.append(colName);
             columnsString.append(",");
         }
@@ -119,7 +119,7 @@ public class QueryFactory {
         return columnsString.toString();
     }
 
-    private static String assignColName(Field field) {
+    public static String getFieldName(Field field) {
 
         if (field.isAnnotationPresent(mySqlColumn.class)) {
             if (!field.getAnnotation(mySqlColumn.class).columnName().isEmpty()) {
@@ -162,7 +162,7 @@ public class QueryFactory {
 
         StringBuilder primaryKeyConstraint = new StringBuilder(", CONSTRAINT PK_test PRIMARY KEY (");
         for (Field field : primaryKeys) {
-            primaryKeyConstraint.append(assignColName(field)).append(", ");
+            primaryKeyConstraint.append(getFieldName(field)).append(", ");
         }
 
         primaryKeyConstraint.delete(primaryKeyConstraint.length() - 2, primaryKeyConstraint.length());
@@ -172,7 +172,7 @@ public class QueryFactory {
 
     private static String createColumnMySqlDeclaration(Field field) {
         String type = mySqlType(field.getType());
-        String name = assignColName(field);
+        String name = getFieldName(field);
         String extras = createExtrasString(field);
         return name + " " + type + extras;
     }
