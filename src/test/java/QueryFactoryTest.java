@@ -44,4 +44,12 @@ public class QueryFactoryTest {
         Throwable exception = assertThrows(IllegalArgumentException.class, () -> QueryFactory.createUpdateSinglePropertyQuery(clz,item,newValue,id));
         assertEquals("There is no field with name height", exception.getMessage());
     }
+    @Test
+    public void createDeleteQuery_deleteFromUserTable_deleteQuery(){
+        Class<?> clz = User.class;
+        String property = "name";
+        String value = "saf";
+        String query = QueryFactory.createDeleteQuery(clz,property,value);
+        assertEquals("DELETE FROM user WHERE name=\"saf\"fix;",query);
+    }
 }

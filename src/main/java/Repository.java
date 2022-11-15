@@ -139,8 +139,10 @@ class Repository<T> {
         }
     }
 
-    public void updateSingleProperty(int id,String item,Object newValue) {
+    public int updateSingleProperty(int id,String item,Object newValue) {
+
         String query = QueryFactory.createUpdateSinglePropertyQuery(clz,item,newValue,id);
+        int rowEffect = 0;
         try (Connection con = ConnectionPool.getConnection()) {
             Statement stmt = con.createStatement();
             stmt.executeUpdate(query);
@@ -148,6 +150,7 @@ class Repository<T> {
             System.out.println(e);
         }
         System.out.println("1 property has been updated successfully");
+        return rowEffect;
     }
     public int updateRow(int id, T object) {
         int rowsAffected = 0;
@@ -161,7 +164,7 @@ class Repository<T> {
         System.out.println("The row updated successfully");
         return rowsAffected;
     }
-    public int singleAndMultipleItemDeletionByProperty(String property,String value) {
+    public int singleAndMultipleItemDeletionByProperty(String property,Object value) {
         String query = QueryFactory.createDeleteQuery(clz,property,value);
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection()) {

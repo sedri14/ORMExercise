@@ -45,8 +45,22 @@ public class QueryFactory {
         }
         throw  new IllegalArgumentException("There is no field with name "+ item);
     }
-    public static String createDeleteQuery(Class<?> clz,String property,String value){
-        return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value);
+    public static String createDeleteQuery(Class<?> clz,String property,Object value){
+        Field[] fields = clz.getDeclaredFields();
+        for (Field field:
+                fields) {
+            if(field.getName().equals(property)){
+                Class<?> fieldType = field.getType();
+                if(property.getClass().equals(fieldType)){
+                    value = handleValue(value);
+                    return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value);
+                } else{
+                    throw new IllegalArgumentException("The value and the required field's type are different");
+                }
+            }
+
+        }
+        throw  new IllegalArgumentException("There is no field with name "+ property);
     }
     public static <T> String createUpdateRowQuery(Class<?> clz,T object,int id) throws IllegalAccessException {
         StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
