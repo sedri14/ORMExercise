@@ -67,7 +67,7 @@ public class QueryFactory {
         Field[] fields = clz.getDeclaredFields();
         for (Field field:
                 fields) {
-            query.append(field.getName());
+            query.append(getFieldName(field));
             query.append(" = ");
             try {
                 query.append(QueryFactory.handleValue(field.get(object)));
