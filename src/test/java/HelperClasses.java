@@ -49,8 +49,8 @@ class WithObject {
 }
 
 class WithAnnotations {
-    @mySqlColumn(columnName = "id", primaryKey = true)
-    String thisId;
+    @mySqlColumn(columnName = "thisID", primaryKey = true)
+    String id;
 
     @mySqlColumn(columnName = "scienceGrade", notNull = true)
     Double grade;
@@ -59,12 +59,12 @@ class WithAnnotations {
     int age;
 
     public WithAnnotations() {
-        this.thisId = String.valueOf(ThreadLocalRandom.current().nextInt());
+        this.id = String.valueOf(ThreadLocalRandom.current().nextInt());
         this.grade = ThreadLocalRandom.current().nextDouble();
     }
 
     public WithAnnotations(int id) {
-        this.thisId = String.valueOf(id);
+        this.id = String.valueOf(id);
         this.grade = ThreadLocalRandom.current().nextDouble();
     }
 
@@ -73,12 +73,12 @@ class WithAnnotations {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         WithAnnotations that = (WithAnnotations) o;
-        return age == that.age && thisId.equals(that.thisId) && grade.equals(that.grade);
+        return age == that.age && id.equals(that.id) && grade.equals(that.grade);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(thisId, grade, age);
+        return Objects.hash(id, grade, age);
     }
 }
 
