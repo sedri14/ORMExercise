@@ -34,7 +34,7 @@ public class QueryFactory {
                 fields) {
             if(field.getName().equals(item)){
                 Class<?> fieldType = field.getType();
-                if(newValue.getClass().equals(fieldType)){
+                if(newValue.getClass().equals(fieldType) || ClassUtils.isAssignable(newValue.getClass(), fieldType)){
                     newValue = handleValue(newValue);
                     return String.format("UPDATE %s SET %s = %s WHERE id = %d;", clz.getSimpleName().toLowerCase(),item,newValue, id);
                 } else{
