@@ -51,7 +51,7 @@ public class QueryFactory {
                 fields) {
             if(field.getName().equals(property)){
                 Class<?> fieldType = field.getType();
-                if(property.getClass().equals(fieldType)){
+                if(value.getClass().equals(fieldType) || ClassUtils.isAssignable(value.getClass(), fieldType)){
                     value = handleValue(value);
                     return String.format("DELETE FROM %s WHERE %s=%s;", clz.getSimpleName().toLowerCase(),property, value);
                 } else{
