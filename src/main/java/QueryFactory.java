@@ -60,9 +60,9 @@ public class QueryFactory {
     // -----------------------HELPERS-----------------------//
     public static String handleValue(Object val) {
         if (ClassUtils.isPrimitiveOrWrapper(val.getClass())) {
-            return val.toString();
+            return (val instanceof Character) ? String.format("\'%c\'", val) : val.toString();
         } else if (val instanceof String) {
-            return String.format("\"%s\"", val.toString());
+            return String.format("\"%s\"", val);
         } else {
             return String.format("\"%s\"", new Gson().toJson(val));
         }
