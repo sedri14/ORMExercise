@@ -41,8 +41,6 @@ class Repository<T> {
             results = listResults(rs);
         } catch (SQLException e) {
             logger.error(e.getMessage() + e.getErrorCode());
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
         return results;
