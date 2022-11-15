@@ -17,7 +17,7 @@ public class QueryFactory {
         queryString.delete(queryString.length() - 2, queryString.length());
         queryString.append(createPrimaryKeyString(declaredFields));
         queryString.append(");");
-        return queryString.toString();
+        return String.valueOf(queryString);
     }
 
     public static String createFindOneQuery(Class<?> clz, int id) {
@@ -62,15 +62,18 @@ public class QueryFactory {
         }
         throw  new IllegalArgumentException("There is no field with name "+ property);
     }
-    public static <T> String createUpdateRowQuery(Class<?> clz,T object,int id) throws IllegalAccessException {
+    public static <T> String createUpdateRowQuery(Class<?> clz,T object,int id) {
         StringBuilder query= new StringBuilder(String.format("UPDATE %s SET ", clz.getSimpleName().toLowerCase()));
         Field[] fields = clz.getDeclaredFields();
         for (Field field:
                 fields) {
             query.append(field.getName());
             query.append(" = ");
-            query.append(QueryFactory.handleValue(field.get(object)));
-            query.append(" , ");
+            try {
+                query.append(QueryFactory.handleValue(field.get(object)));
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(String.format("Field %s is inaccessible", field.getName()));
+            }            query.append(" , ");
         }
         query.delete(query.length()-3, query.length()-1);
         query.append(String.format("WHERE id = %d;",id));
@@ -85,7 +88,7 @@ public class QueryFactory {
         String columnsString = columnsFormattedString(instance.getClass());
         String valuesString = "VALUES " + valuesFormattedString(instance);
 
-        return queryString.append(columnsString).append(valuesString).toString();
+        return String.valueOf(queryString.append(columnsString).append(valuesString));
     }
 
     public static <T> String createInsertMultipleQuery(List<T> itemList, Class<?> clz) {
@@ -101,14 +104,18 @@ public class QueryFactory {
         }
         listValuesString.delete(listValuesString.length() - 1, listValuesString.length());
 
-        return queryString.append(columnsString).append(listValuesString).toString();
+        return String.valueOf(queryString.append(columnsString).append(listValuesString));
     }
 
 
     // -----------------------HELPERS-----------------------//
     public static String handleValue(Object val) {
+
+        if (val == null) {
+            return "NULL";
+        }
         if (ClassUtils.isPrimitiveOrWrapper(val.getClass())) {
-            return (val instanceof Character) ? String.format("\'%c\'", val) : val.toString();
+            return (val instanceof Character) ? String.format("\'%c\'", val) : String.valueOf(val);
         } else if (val instanceof String) {
             return String.format("\"%s\"", val);
         } else {
@@ -130,7 +137,7 @@ public class QueryFactory {
         columnsString.delete(columnsString.length() - 1, columnsString.length());
         columnsString.append(")");
 
-        return columnsString.toString();
+        return String.valueOf(columnsString);
     }
 
     public static String getFieldName(Field field) {
@@ -163,7 +170,7 @@ public class QueryFactory {
         valuesString.delete(valuesString.length() - 1, valuesString.length());
         valuesString.append(")");
 
-        return valuesString.toString();
+        return String.valueOf(valuesString);
     }
 
     private static String createPrimaryKeyString(Field[] fields) {
@@ -181,7 +188,7 @@ public class QueryFactory {
 
         primaryKeyConstraint.delete(primaryKeyConstraint.length() - 2, primaryKeyConstraint.length());
         primaryKeyConstraint.append(")");
-        return primaryKeyConstraint.toString();
+        return String.valueOf(primaryKeyConstraint);
     }
 
     private static String createColumnMySqlDeclaration(Field field) {
