@@ -117,7 +117,7 @@ public class RepositoryTests {
         repo = new Repository<>(clz);
         repo.insertOne(o);
 
-        Assertions.assertEquals(1, repo.singleAndMultipleItemDeletionByProperty("id", 1));
+        Assertions.assertEquals(1, repo.deleteByProperty("id", 1));
     }
 
     @ParameterizedTest
@@ -135,7 +135,7 @@ public class RepositoryTests {
         repo = new Repository<>(clz);
         repo.insertOne(o);
 
-        Assertions.assertEquals(1, repo.singleAndMultipleItemDeletionByProperty("thisId", "1"));
+        Assertions.assertEquals(1, repo.deleteByProperty("thisId", "1"));
     }
 
     private static Stream<Arguments> classesToCheck() {

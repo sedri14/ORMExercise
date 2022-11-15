@@ -22,33 +22,32 @@ public class Client {
 
         //ADD
         //insetOne
-        User user1 = new User(5656,"Lulu",25);
+        User user1 = new User(7878,"Lulu",25);
 
         repo.insertOne(user1);
-        repo.insertOne(user1);
+        //repo.insertOne(user1);
         System.out.println("--------------------------");
         //insertMultiple
         List<User> usersToInsert = new ArrayList<>();
-        usersToInsert.add(new User(111, "Gogo", 28));
-        usersToInsert.add(new User(115, "Yoyo", 35));
-        usersToInsert.add(new User(254, "Dodo", 15));
+        usersToInsert.add(new User(232323, "Gogo", 28));
+        usersToInsert.add(new User(343434, "Yoyo", 35));
 
         repo.insertMultiple(usersToInsert);
         System.out.println("--------------------------");
         //update a single property of a single item
         repo.updateSingleProperty(4841,"age", 100);
-        repo.updateSingleProperty(4841,"job", 100);
-        repo.updateSingleProperty(4841,"age", "ThisIsNotAge");
+        //repo.updateSingleProperty(4841,"job", 100);
+        //repo.updateSingleProperty(4841,"age", "ThisIsNotAge");
         System.out.println("--------------------------");
         //update an entire item
         repo.updateRow(2,new User(2,"saf",33));
 
         //DELETE
         //delete items
-        repo.singleAndMultipleItemDeletionByProperty("name", "Lea");
+        repo.deleteByProperty("name", "Gogo");
         System.out.println("--------------------------");
         //delete table
-        repo.truncateTable();
+        //repo.truncateTable();
         System.out.println("--------------------------");
     }
 }
