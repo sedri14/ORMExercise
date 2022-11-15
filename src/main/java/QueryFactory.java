@@ -17,7 +17,7 @@ public class QueryFactory {
         queryString.delete(queryString.length() - 2, queryString.length());
         queryString.append(createPrimaryKeyString(declaredFields));
         queryString.append(");");
-        return queryString.toString();
+        return String.valueOf(queryString);
     }
 
     public static String createFindOneQuery(Class<?> clz, int id) {
@@ -37,7 +37,7 @@ public class QueryFactory {
         String columnsString = columnsFormattedString(instance.getClass());
         String valuesString = "VALUES " + valuesFormattedString(instance);
 
-        return queryString.append(columnsString).append(valuesString).toString();
+        return String.valueOf(queryString.append(columnsString).append(valuesString));
     }
 
     public static <T> String createInsertMultipleQuery(List<T> itemList, Class<?> clz) {
@@ -53,7 +53,7 @@ public class QueryFactory {
         }
         listValuesString.delete(listValuesString.length() - 1, listValuesString.length());
 
-        return queryString.append(columnsString).append(listValuesString).toString();
+        return String.valueOf(queryString.append(columnsString).append(listValuesString));
     }
 
 
@@ -64,7 +64,7 @@ public class QueryFactory {
             return "NULL";
         }
         if (ClassUtils.isPrimitiveOrWrapper(val.getClass())) {
-            return (val instanceof Character) ? String.format("\'%c\'", val) : val.toString();
+            return (val instanceof Character) ? String.format("\'%c\'", val) : String.valueOf(val);
         } else if (val instanceof String) {
             return String.format("\"%s\"", val);
         } else {
@@ -86,7 +86,7 @@ public class QueryFactory {
         columnsString.delete(columnsString.length() - 1, columnsString.length());
         columnsString.append(")");
 
-        return columnsString.toString();
+        return String.valueOf(columnsString);
     }
 
     public static String getFieldName(Field field) {
@@ -119,7 +119,7 @@ public class QueryFactory {
         valuesString.delete(valuesString.length() - 1, valuesString.length());
         valuesString.append(")");
 
-        return valuesString.toString();
+        return String.valueOf(valuesString);
     }
 
     private static String createPrimaryKeyString(Field[] fields) {
@@ -137,7 +137,7 @@ public class QueryFactory {
 
         primaryKeyConstraint.delete(primaryKeyConstraint.length() - 2, primaryKeyConstraint.length());
         primaryKeyConstraint.append(")");
-        return primaryKeyConstraint.toString();
+        return String.valueOf(primaryKeyConstraint);
     }
 
     private static String createColumnMySqlDeclaration(Field field) {
