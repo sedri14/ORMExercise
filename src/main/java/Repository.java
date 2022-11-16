@@ -74,8 +74,14 @@ class Repository<T> {
             ResultSet rs = stmt.executeQuery(query);
             result = (rs.next() ? createSingleInstance(rs) : null);
         } catch (SQLException e) {
-            logger.error(e.getMessage() + e.getErrorCode());
-            throw new RuntimeException("DB error", e);
+            if (e.getErrorCode() == 1062)
+            {
+                logger.error(String.format("Can't add item. Id %d already exists", id));
+                throw new RuntimeException(String.format("Can't add item. Id %d already exists", id), e);
+            }
+            else {
+                throw new RuntimeException(e);
+            }
         }
         logger.info("findOne execute query finished");
 
@@ -154,7 +160,7 @@ class Repository<T> {
         return clzInstance;
     }
 
-    public void fieldsAssignment(T clzInstance, ResultSet rs) {
+    private void fieldsAssignment(T clzInstance, ResultSet rs) {
         Field[] declaredFields = clz.getDeclaredFields();
         for (Field field : declaredFields) {
             String colName = QueryFactory.getFieldName(field);
@@ -171,7 +177,7 @@ class Repository<T> {
         }
     }
 
-    public boolean initTable() {
+    private boolean initTable() {
         String query = QueryFactory.createTableMySQLStatement(clz);
         logger.debug(String.format("initTable: Execute query: %s", query));
         boolean isInit = false;
@@ -231,9 +237,9 @@ class Repository<T> {
 
         return rowsAffected;
     }
-    public int singleAndMultipleItemDeletionByProperty(String property, Object value) {
+    public int deleteByProperty(String property, Object value) {
         String query = QueryFactory.createDeleteQuery(clz,property,value);
-        logger.debug(String.format("singleAndMultipleItemDeletionByProperty: Execute query: %s", query));
+        logger.debug(String.format("deleteByProperty: Execute query: %s", query));
         int rowsAffected = 0;
         try (Connection con = ConnectionPool.getConnection(); Statement stmt = con.createStatement();) {
             rowsAffected = stmt.executeUpdate(query);

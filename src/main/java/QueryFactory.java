@@ -89,7 +89,6 @@ public class QueryFactory {
     }
 
 
-    // -----------------------HELPERS-----------------------//
     public static String handleValue(Object val) {
 
         if (val == null) {

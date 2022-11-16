@@ -7,39 +7,47 @@ public class Client {
     public static void main(String[] args) {
 
         Repository<User> repo = new Repository<>(User.class);
+        //READ
         //findAll
         List<User> users = repo.findAll();
         users.forEach(System.out::println);
-
         System.out.println("--------------------------");
-
         //findOne
         User user = repo.findOne(2);
         System.out.println(user);
-
         System.out.println("--------------------------");
-
         //getByProperty
-        List<User> allMoshes = repo.getByProperty("name", "moshe");
-        System.out.println(allMoshes);
+        List<User> all35 = repo.getByProperty("age", 35);
+        System.out.println(all35);
 
-        System.out.println("--------------------------");
-
+        //ADD
         //insetOne
-        User user1 = new User(8989,"TestUser",35);
+        User user1 = new User(7878,"Lulu",25);
+
         repo.insertOne(user1);
-
+        repo.insertOne(user1);
         System.out.println("--------------------------");
-
         //insertMultiple
         List<User> usersToInsert = new ArrayList<>();
-        usersToInsert.add(new User(888, "Gogo", 28));
-        usersToInsert.add(new User(999, "Yoyo", 35));
-        usersToInsert.add(new User(555, "Dodo", 15));
+        usersToInsert.add(new User(232323, "Gogo", 28));
+        usersToInsert.add(new User(343434, "Yoyo", 35));
 
         repo.insertMultiple(usersToInsert);
-
-        //repo.insertOne(new User(2,"safaa",20));
+        System.out.println("--------------------------");
+        //update a single property of a single item
+        repo.updateSingleProperty(4841,"age", 100);
+        //repo.updateSingleProperty(4841,"job", 100);
+        //repo.updateSingleProperty(4841,"age", "ThisIsNotAge");
+        System.out.println("--------------------------");
+        //update an entire item
         repo.updateRow(2,new User(2,"saf",33));
+
+        //DELETE
+        //delete items
+        repo.deleteByProperty("name", "Gogo");
+        System.out.println("--------------------------");
+        //delete table
+        //repo.truncateTable();
+        System.out.println("--------------------------");
     }
 }
