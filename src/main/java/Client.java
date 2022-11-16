@@ -14,7 +14,7 @@ public class Client {
         System.out.println("--------------------------");
 
         //findOne
-        User user = repo.findOne(2);
+        User user = repo.findOne(555);
         System.out.println(user);
 
         System.out.println("--------------------------");
@@ -26,16 +26,16 @@ public class Client {
         System.out.println("--------------------------");
 
         //insetOne
-        User user1 = new User(8989,"TestUser",35);
+        User user1 = new User(7546,"TestUser",35);
         repo.insertOne(user1);
 
         System.out.println("--------------------------");
 
         //insertMultiple
         List<User> usersToInsert = new ArrayList<>();
-        usersToInsert.add(new User(888, "Gogo", 28));
-        usersToInsert.add(new User(999, "Yoyo", 35));
-        usersToInsert.add(new User(555, "Dodo", 15));
+        usersToInsert.add(new User(222, "Gogo", 28));
+        usersToInsert.add(new User(333, "Yoyo", 35));
+        usersToInsert.add(new User(444, "Dodo", 15));
 
         repo.insertMultiple(usersToInsert);
 
