@@ -99,7 +99,7 @@ public class QueryFactory {
         } else if (val instanceof String) {
             return String.format("\"%s\"", val);
         } else {
-            return String.format("\"%s\"", new Gson().toJson(val));
+            return String.format("\"%s\"", new Gson().toJson(val).replace("\"", "\\\""));
         }
     }
 

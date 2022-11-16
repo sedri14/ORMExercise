@@ -8,6 +8,8 @@ public class User {
     public String name;
     public int age;
 
+    public Animal animal;
+
     public User(){
 
     }
@@ -16,6 +18,7 @@ public class User {
         this.id = id;
         this.name = name;
         this.age = age;
+        animal = new Animal(6, "sdfsd", "sefsdf", "sssdfsdgs");
     }
 
     public int getId() {
