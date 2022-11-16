@@ -1,6 +1,4 @@
 import Annotations.mySqlColumn;
-import com.google.gson.Gson;
-import org.apache.commons.lang3.ClassUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -162,7 +160,7 @@ class Repository<T> {
             String colName = QueryFactory.getFieldName(field);
             field.setAccessible(true);
             try {
-                field.set(clzInstance, objectAsType(field.getType(), rs.getObject(colName)));
+                field.set(clzInstance, rs.getObject(colName));
             } catch (IllegalAccessException e) {
                 logger.error(String.format("Throwing exception: Field %s is inaccessible", field.getName()));
                 throw new RuntimeException(String.format("Field %s is inaccessible", field.getName()));

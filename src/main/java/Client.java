@@ -14,7 +14,7 @@ public class Client {
         System.out.println("--------------------------");
 
         //findOne
-        User user = repo.findOne(555);
+        User user = repo.findOne(2);
         System.out.println(user);
 
         System.out.println("--------------------------");
